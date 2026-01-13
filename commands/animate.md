@@ -97,10 +97,10 @@ curl -s "$TRANSPARENT_URL" -o "$OUTPUT_DIR/character_transparent.png"
 echo "Background removed"
 ```
 
-### Step 4a: Generate Animation Video (ByteDance Seedance)
+### Step 4a: Generate Animation Video (ByteDance Seedance Fast)
 
 ```bash
-curl -s "https://fal.run/fal-ai/seedance/v1/pro/image-to-video" \
+curl -s "https://fal.run/fal-ai/bytedance/seedance/v1/pro/fast/image-to-video" \
   -H "Authorization: Key $FAL_KEY" \
   -H "Content-Type: application/json" \
   -d "{

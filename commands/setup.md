@@ -54,10 +54,32 @@ Config file: ~/.config/witmani/config
 ### Step 5: Handle Missing Dependencies
 
 **If ffmpeg not found:**
+
+Use AskUserQuestion tool to offer auto-install:
+
+Question: "ffmpeg not found. Install it now?"
+Options:
+- "Yes, install automatically" - Will run the appropriate install command
+- "No, I'll install manually" - Show manual instructions
+
+If user chooses auto-install, detect OS and run:
+```bash
+# Detect OS and install
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+  sudo apt update && sudo apt install ffmpeg -y
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+  brew install ffmpeg
+else
+  echo "Please install ffmpeg manually for your OS"
+fi
 ```
-ffmpeg is required. Install with:
+
+If user chooses manual, show:
+```
+Install ffmpeg manually:
   Ubuntu/Debian: sudo apt install ffmpeg
   macOS:         brew install ffmpeg
+  Windows:       choco install ffmpeg
 ```
 
 **If no API key configured:**
