@@ -27,11 +27,14 @@ Generate game character animations from text descriptions. Creates sprite sheets
 
 You are a game animation generator. Execute these steps to create a sprite sheet.
 
-### Step 0: Detect Provider
+### Step 0: Load Config and Detect Provider
 
-Check which API key is available (in order of priority):
+First, load saved API keys from config file, then check environment:
 
 ```bash
+CONFIG_FILE="$HOME/.config/witmani/config"
+[ -f "$CONFIG_FILE" ] && source "$CONFIG_FILE"
+
 if [ -n "$FAL_KEY" ]; then
   PROVIDER="fal"
 elif [ -n "$GEMINI_API_KEY" ]; then
@@ -47,19 +50,7 @@ echo "Provider: $PROVIDER"
 ```
 Welcome to WitMani Game Animator!
 
-To get started, set up one API key (takes 2 minutes):
-
-Option A: fal.ai (recommended - best quality)
-  1. Visit https://fal.ai/dashboard/keys
-  2. Create a key
-  3. Run: export FAL_KEY="your-key"
-
-Option B: Gemini (generous free tier)
-  1. Visit https://aistudio.google.com/apikey
-  2. Create a key
-  3. Run: export GEMINI_API_KEY="your-key"
-
-Then try: /witmani:animate "pixel knight" "running"
+To get started, run: /witmani:setup
 ```
 
 ### Step 1: Setup
@@ -68,7 +59,7 @@ Then try: /witmani:animate "pixel knight" "running"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 CHARACTER_NAME=$(echo "<CHARACTER_DESCRIPTION>" | tr ' ' '_' | tr -cd '[:alnum:]_' | head -c 20)
 OUTPUT_DIR="animations/${CHARACTER_NAME}_${TIMESTAMP}"
-mkdir -p "$OUTPUT_DIR/frames"
+mkdir -p "$OUTPUT_DIR/frames" "$OUTPUT_DIR/frames_transparent"
 echo "Output: $OUTPUT_DIR"
 ```
 
@@ -106,16 +97,16 @@ curl -s "$TRANSPARENT_URL" -o "$OUTPUT_DIR/character_transparent.png"
 echo "Background removed"
 ```
 
-### Step 4a: Generate Animation Video (fal Kling)
+### Step 4a: Generate Animation Video (ByteDance Seedance)
 
 ```bash
-curl -s "https://fal.run/fal-ai/kling-video/v1/standard/image-to-video" \
+curl -s "https://fal.run/fal-ai/seedance/v1/pro/image-to-video" \
   -H "Authorization: Key $FAL_KEY" \
   -H "Content-Type: application/json" \
   -d "{
     \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style, consistent character\",
     \"image_url\": \"$TRANSPARENT_URL\",
-    \"duration\": \"5\",
+    \"duration\": 5,
     \"aspect_ratio\": \"1:1\"
   }" > "$OUTPUT_DIR/video_response.json"
 
@@ -140,18 +131,8 @@ curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flas
 echo "Character image saved"
 ```
 
-### Step 3b: Remove Background (requires REMOVEBG_API_KEY or skip)
+### Step 3b: Remove Background (skip for Gemini)
 
-If REMOVEBG_API_KEY is set:
-```bash
-curl -s -H "X-Api-Key: $REMOVEBG_API_KEY" \
-  -F "image_file=@$OUTPUT_DIR/character.png" \
-  -F "size=auto" \
-  https://api.remove.bg/v1.0/removebg \
-  -o "$OUTPUT_DIR/character_transparent.png"
-```
-
-Otherwise, use the original image:
 ```bash
 cp "$OUTPUT_DIR/character.png" "$OUTPUT_DIR/character_transparent.png"
 ```
@@ -202,13 +183,52 @@ ffmpeg -i "$OUTPUT_DIR/animation.mp4" -vf "fps=$EXTRACT_FPS" -frames:v $FRAME_CO
 echo "Extracted $FRAME_COUNT frames"
 ```
 
+### Step 5.5: Remove Background from All Frames (Parallel)
+
+For fal provider, remove background from each extracted frame in parallel:
+
+```bash
+# Create a function to process each frame
+remove_bg_frame() {
+  FRAME_PATH="$1"
+  FRAME_NAME=$(basename "$FRAME_PATH")
+  OUTPUT_PATH="$OUTPUT_DIR/frames_transparent/$FRAME_NAME"
+
+  # Upload frame and get URL (use a temp hosting or base64)
+  RESPONSE=$(curl -s "https://fal.run/fal-ai/birefnet" \
+    -H "Authorization: Key $FAL_KEY" \
+    -H "Content-Type: application/json" \
+    -d "{\"image_url\": \"data:image/png;base64,$(base64 -w 0 "$FRAME_PATH")\"}")
+
+  TRANSPARENT_URL=$(echo "$RESPONSE" | jq -r '.image.url')
+  curl -s "$TRANSPARENT_URL" -o "$OUTPUT_PATH"
+  echo "Processed: $FRAME_NAME"
+}
+
+export -f remove_bg_frame
+export FAL_KEY OUTPUT_DIR
+
+# Process all frames in parallel (4 concurrent jobs)
+ls "$OUTPUT_DIR/frames/"frame_*.png | xargs -P 4 -I {} bash -c 'remove_bg_frame "$@"' _ {}
+
+echo "All frames background removed"
+
+# Use transparent frames for sprite sheet
+FRAMES_DIR="$OUTPUT_DIR/frames_transparent"
+```
+
+For gemini provider, skip this step and use:
+```bash
+FRAMES_DIR="$OUTPUT_DIR/frames"
+```
+
 ### Step 6: Create Sprite Sheet
 
 ```bash
 COLS=$([ $FRAME_COUNT -le 8 ] && echo $FRAME_COUNT || echo 8)
 ROWS=$(( ($FRAME_COUNT + $COLS - 1) / $COLS ))
 
-ffmpeg -i "$OUTPUT_DIR/frames/frame_%04d.png" -filter_complex "tile=${COLS}x${ROWS}" "$OUTPUT_DIR/${CHARACTER_NAME}.png" -y 2>/dev/null
+ffmpeg -i "$FRAMES_DIR/frame_%04d.png" -filter_complex "tile=${COLS}x${ROWS}" "$OUTPUT_DIR/${CHARACTER_NAME}.png" -y 2>/dev/null
 echo "Sprite sheet created"
 ```
 
@@ -216,7 +236,7 @@ echo "Sprite sheet created"
 
 ```bash
 FPS=<FPS>  # from --fps or default 10
-ffmpeg -i "$OUTPUT_DIR/frames/frame_%04d.png" -vf "fps=$FPS,scale=128:-1:flags=lanczos" -loop 0 "$OUTPUT_DIR/${CHARACTER_NAME}.gif" -y 2>/dev/null
+ffmpeg -i "$FRAMES_DIR/frame_%04d.png" -vf "fps=$FPS,scale=128:-1:flags=lanczos" -loop 0 "$OUTPUT_DIR/${CHARACTER_NAME}.gif" -y 2>/dev/null
 echo "Preview GIF created"
 ```
 
@@ -224,8 +244,8 @@ echo "Preview GIF created"
 
 Get frame dimensions:
 ```bash
-FRAME_WIDTH=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of default=noprint_wrappers=1:nokey=1 "$OUTPUT_DIR/frames/frame_0001.png")
-FRAME_HEIGHT=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of default=noprint_wrappers=1:nokey=1 "$OUTPUT_DIR/frames/frame_0001.png")
+FRAME_WIDTH=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of default=noprint_wrappers=1:nokey=1 "$FRAMES_DIR/frame_0001.png")
+FRAME_HEIGHT=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of default=noprint_wrappers=1:nokey=1 "$FRAMES_DIR/frame_0001.png")
 ```
 
 **Phaser format** (default):
@@ -296,13 +316,16 @@ Phaser usage:
 
 ```
 animations/<character>_<timestamp>/
-├── <character>.png       # Sprite sheet (game-ready)
+├── <character>.png       # Sprite sheet (game-ready, transparent)
 ├── <character>.json      # Phaser animation config
 ├── <character>.gif       # Preview animation
 ├── character.png         # Original character
 ├── character_transparent.png
 ├── animation.mp4         # Source video
-└── frames/
+├── frames/               # Raw extracted frames
+│   ├── frame_0001.png
+│   └── ...
+└── frames_transparent/   # Background-removed frames
     ├── frame_0001.png
     └── ...
 ```
