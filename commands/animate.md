@@ -342,7 +342,20 @@ animations = [{
 EOF
 ```
 
-### Step 9: Report Results
+### Step 9: Copy Preview HTML to Output
+
+```bash
+PREVIEW_SRC="$HOME/.config/witmani/preview.html"
+if [ ! -f "$PREVIEW_SRC" ]; then
+  PREVIEW_SRC="$HOME/.claude/plugins/marketplaces/game-animator/assets/preview.html"
+fi
+if [ -f "$PREVIEW_SRC" ]; then
+  cp "$PREVIEW_SRC" "$OUTPUT_DIR/preview.html"
+  echo "Preview copied to output"
+fi
+```
+
+### Step 10: Report Results
 
 Show the user:
 ```
@@ -352,14 +365,13 @@ Output folder: $OUTPUT_DIR/
   - ${CHARACTER_NAME}.png (sprite sheet)
   - ${CHARACTER_NAME}.json (Phaser config)
   - ${CHARACTER_NAME}.gif (preview)
+  - preview.html (browser preview)
 
 Frame size: ${FRAME_WIDTH}x${FRAME_HEIGHT}
 Total frames: $FRAME_COUNT
 FPS: $FPS
 
-Preview in browser:
-  Open ~/.config/witmani/preview.html and drag the sprite sheet to preview.
-  Or: file://$HOME/.config/witmani/preview.html
+Preview: Open $OUTPUT_DIR/preview.html in browser, drag sprite sheet to preview.
 
 Phaser usage:
   this.load.spritesheet('${CHARACTER_NAME}', '${CHARACTER_NAME}.png', {
