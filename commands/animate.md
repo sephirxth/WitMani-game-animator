@@ -45,13 +45,7 @@ fi
 echo "Provider: $PROVIDER"
 ```
 
-**If PROVIDER is "none"**, stop and show this welcome message:
-
-```
-Welcome to WitMani Game Animator!
-
-To get started, run: /witmani:setup
-```
+**If PROVIDER is "none"**: Use Skill tool to invoke `/witmani:setup` automatically, then return to continue after setup is complete.
 
 ### Step 1: Setup
 
@@ -59,7 +53,7 @@ To get started, run: /witmani:setup
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 CHARACTER_NAME=$(echo "<CHARACTER_DESCRIPTION>" | tr ' ' '_' | tr -cd '[:alnum:]_' | head -c 20)
 OUTPUT_DIR="animations/${CHARACTER_NAME}_${TIMESTAMP}"
-mkdir -p "$OUTPUT_DIR/frames" "$OUTPUT_DIR/frames_transparent"
+mkdir -p "$OUTPUT_DIR/frames" "$OUTPUT_DIR/frames_clean"
 echo "Output: $OUTPUT_DIR"
 ```
 
@@ -69,12 +63,14 @@ echo "Output: $OUTPUT_DIR"
 
 ### Step 2a: Generate Character Image (fal Flux)
 
+Request character on **bright green background** for clean chromakey:
+
 ```bash
 curl -s "https://fal.run/fal-ai/flux/schnell" \
   -H "Authorization: Key $FAL_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "prompt": "Single game character sprite: <CHARACTER_DESCRIPTION>. Centered, facing right, neutral pose. Style: clean, game-ready, high contrast, full body, solid background.",
+    "prompt": "Single game character sprite: <CHARACTER_DESCRIPTION>. Centered, facing right, neutral pose. Style: clean, game-ready, high contrast, full body. IMPORTANT: bright green (#00FF00) solid background for chromakey.",
     "image_size": {"width": 512, "height": 512},
     "num_images": 1
   }' > "$OUTPUT_DIR/image_response.json"
@@ -99,12 +95,14 @@ echo "Background removed"
 
 ### Step 4a: Generate Animation Video (ByteDance Seedance Fast)
 
+Request animation on **bright green background**:
+
 ```bash
 curl -s "https://fal.run/fal-ai/bytedance/seedance/v1/pro/fast/image-to-video" \
   -H "Authorization: Key $FAL_KEY" \
   -H "Content-Type: application/json" \
   -d "{
-    \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style, consistent character\",
+    \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style, consistent character, bright green (#00FF00) solid background, no background changes\",
     \"image_url\": \"$TRANSPARENT_URL\",
     \"duration\": 5,
     \"aspect_ratio\": \"1:1\"
@@ -125,7 +123,7 @@ echo "Animation video saved"
 curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=$GEMINI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "contents": [{"parts": [{"text": "Generate a single game character sprite: <CHARACTER_DESCRIPTION>. Centered on solid color background, facing right, neutral pose. Style: clean, game-ready, high contrast."}]}],
+    "contents": [{"parts": [{"text": "Generate a single game character sprite: <CHARACTER_DESCRIPTION>. Centered on bright green (#00FF00) solid background for chromakey, facing right, neutral pose. Style: clean, game-ready, high contrast."}]}],
     "generationConfig": {"responseModalities": ["image", "text"]}
   }' | jq -r '.candidates[0].content.parts[] | select(.inlineData) | .inlineData.data' | base64 -d > "$OUTPUT_DIR/character.png"
 echo "Character image saved"
@@ -146,7 +144,7 @@ RESPONSE=$(curl -s "https://generativelanguage.googleapis.com/v1beta/models/veo-
   -H "Content-Type: application/json" \
   -d "{
     \"instances\": [{
-      \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style\",
+      \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style, bright green background\",
       \"image\": {\"bytesBase64Encoded\": \"$IMAGE_BASE64\"}
     }],
     \"parameters\": {\"aspectRatio\": \"1:1\"}
@@ -183,43 +181,64 @@ ffmpeg -i "$OUTPUT_DIR/animation.mp4" -vf "fps=$EXTRACT_FPS" -frames:v $FRAME_CO
 echo "Extracted $FRAME_COUNT frames"
 ```
 
-### Step 5.5: Remove Background from All Frames (Parallel)
+### Step 5.5: Remove Background (Hybrid: Chromakey + BiRefNet + Cleanup)
 
-For fal provider, remove background from each extracted frame in parallel:
+**Method A: Try ffmpeg chromakey first (fast, works if green background)**
 
 ```bash
-# Create a function to process each frame
-remove_bg_frame() {
-  FRAME_PATH="$1"
-  FRAME_NAME=$(basename "$FRAME_PATH")
-  OUTPUT_PATH="$OUTPUT_DIR/frames_transparent/$FRAME_NAME"
-
-  # Upload frame and get URL (use a temp hosting or base64)
-  RESPONSE=$(curl -s "https://fal.run/fal-ai/birefnet" \
-    -H "Authorization: Key $FAL_KEY" \
-    -H "Content-Type: application/json" \
-    -d "{\"image_url\": \"data:image/png;base64,$(base64 -w 0 "$FRAME_PATH")\"}")
-
-  TRANSPARENT_URL=$(echo "$RESPONSE" | jq -r '.image.url')
-  curl -s "$TRANSPARENT_URL" -o "$OUTPUT_PATH"
-  echo "Processed: $FRAME_NAME"
-}
-
-export -f remove_bg_frame
-export FAL_KEY OUTPUT_DIR
-
-# Process all frames in parallel (4 concurrent jobs)
-ls "$OUTPUT_DIR/frames/"frame_*.png | xargs -P 4 -I {} bash -c 'remove_bg_frame "$@"' _ {}
-
-echo "All frames background removed"
-
-# Use transparent frames for sprite sheet
-FRAMES_DIR="$OUTPUT_DIR/frames_transparent"
+for f in "$OUTPUT_DIR/frames/"frame_*.png; do
+  FRAME_NAME=$(basename "$f")
+  # Chromakey green + clean up edges
+  ffmpeg -i "$f" -vf "chromakey=0x00FF00:0.3:0.1,despill=green" -c:v png "$OUTPUT_DIR/frames_clean/$FRAME_NAME" -y 2>/dev/null
+done
+echo "Chromakey applied"
 ```
 
-For gemini provider, skip this step and use:
+**Method B: If chromakey fails (no green background), use BiRefNet in parallel**
+
+Check if frames have transparency after chromakey. If not, fall back to BiRefNet:
+
 ```bash
-FRAMES_DIR="$OUTPUT_DIR/frames"
+# Check if chromakey worked (file should have alpha channel)
+HAS_ALPHA=$(ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt -of default=noprint_wrappers=1:nokey=1 "$OUTPUT_DIR/frames_clean/frame_0001.png" 2>/dev/null | grep -c "rgba")
+
+if [ "$HAS_ALPHA" -eq 0 ]; then
+  echo "Chromakey failed, using BiRefNet..."
+
+  for f in "$OUTPUT_DIR/frames/"frame_*.png; do
+    FRAME_NAME=$(basename "$f")
+    (
+      TEMP_JSON=$(mktemp)
+      echo "{\"image_url\": \"data:image/png;base64,$(base64 -w 0 "$f")\"}" > "$TEMP_JSON"
+
+      RESPONSE=$(curl -s "https://fal.run/fal-ai/birefnet" \
+        -H "Authorization: Key $FAL_KEY" \
+        -H "Content-Type: application/json" \
+        -d @"$TEMP_JSON")
+
+      rm "$TEMP_JSON"
+
+      TRANSPARENT_URL=$(echo "$RESPONSE" | jq -r '.image.url')
+      if [ "$TRANSPARENT_URL" != "null" ]; then
+        curl -s "$TRANSPARENT_URL" -o "$OUTPUT_DIR/frames_clean/$FRAME_NAME"
+      fi
+      echo "Processed: $FRAME_NAME"
+    ) &
+  done
+  wait
+fi
+```
+
+**Method C: Post-process to clean up any remaining artifacts**
+
+```bash
+# Clean up semi-transparent edges (threshold alpha)
+for f in "$OUTPUT_DIR/frames_clean/"frame_*.png; do
+  ffmpeg -i "$f" -vf "geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lt(alpha(X,Y),200),0,255)'" -c:v png "$f.tmp" -y 2>/dev/null && mv "$f.tmp" "$f"
+done
+echo "Edges cleaned"
+
+FRAMES_DIR="$OUTPUT_DIR/frames_clean"
 ```
 
 ### Step 6: Create Sprite Sheet
@@ -308,6 +327,7 @@ Phaser usage:
 
 ## Error Handling
 
+- If PROVIDER is "none": Auto-invoke /witmani:setup
 - If ffmpeg not found: Tell user to install it (`apt install ffmpeg` or `brew install ffmpeg`)
 - If API call fails: Show error message and suggest checking API key
 - If video generation times out: Suggest trying again or using a different provider
@@ -325,7 +345,7 @@ animations/<character>_<timestamp>/
 ├── frames/               # Raw extracted frames
 │   ├── frame_0001.png
 │   └── ...
-└── frames_transparent/   # Background-removed frames
+└── frames_clean/         # Background-removed & cleaned frames
     ├── frame_0001.png
     └── ...
 ```
