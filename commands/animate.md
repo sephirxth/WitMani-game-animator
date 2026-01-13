@@ -86,7 +86,7 @@ echo "Character image saved"
 curl -s "https://fal.run/fal-ai/birefnet" \
   -H "Authorization: Key $FAL_KEY" \
   -H "Content-Type: application/json" \
-  -d "{\"image_url\": \"$IMAGE_URL\"}" > "$OUTPUT_DIR/bg_response.json"
+  -d "{\"image_url\": \"$IMAGE_URL\", \"model\": \"General Use (Heavy)\"}" > "$OUTPUT_DIR/bg_response.json"
 
 TRANSPARENT_URL=$(jq -r '.image.url' "$OUTPUT_DIR/bg_response.json")
 curl -s "$TRANSPARENT_URL" -o "$OUTPUT_DIR/character_transparent.png"
@@ -214,7 +214,7 @@ if [ "$HAS_ALPHA" -eq 0 ]; then
       RESPONSE=$(curl -s "https://fal.run/fal-ai/birefnet" \
         -H "Authorization: Key $FAL_KEY" \
         -H "Content-Type: application/json" \
-        -d @"$TEMP_JSON")
+        -d "$(jq -c '. + {model: "General Use (Heavy)"}' "$TEMP_JSON")")
 
       rm "$TEMP_JSON"
 
