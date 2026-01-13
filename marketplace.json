@@ -1,5 +1,5 @@
 {
-  "name": "witmani-game-animator",
+  "name": "game-animator",
   "description": "WitMani Game Animator - Generate sprite sheet animations from text",
   "plugins": [
     {
