@@ -1,8 +1,6 @@
 ---
 description: Generate game character animation sprite sheet
 argument-hint: <character> <action>
-aliases:
-  - witmani
 ---
 
 # /animate
@@ -12,9 +10,9 @@ Generate game character animations from text descriptions. Creates sprite sheets
 ## Usage
 
 ```bash
-/animate "pixel knight" "running right"
-/animate "cute cat" "jumping" --frames 8
-/witmani "robot" "walking" --format godot
+/witmani:animate "pixel knight" "running right"
+/witmani:animate "cute cat" "jumping" --frames 8
+/witmani:animate "robot" "walking" --format godot
 ```
 
 ## Parameters
@@ -61,7 +59,7 @@ Option B: Gemini (generous free tier)
   2. Create a key
   3. Run: export GEMINI_API_KEY="your-key"
 
-Then try: /animate "pixel knight" "running"
+Then try: /witmani:animate "pixel knight" "running"
 ```
 
 ### Step 1: Setup

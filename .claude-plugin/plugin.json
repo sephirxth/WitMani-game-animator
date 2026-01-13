@@ -1,5 +1,5 @@
 {
-  "name": "game-animator",
+  "name": "witmani",
   "version": "0.1.0",
   "description": "Generate game character animations from text descriptions. Create sprite sheets for Phaser, Godot, and more.",
   "author": {

@@ -3,7 +3,7 @@
   "description": "WitMani Game Animator - Generate sprite sheet animations from text",
   "plugins": [
     {
-      "name": "game-animator",
+      "name": "witmani",
       "version": "0.1.0",
       "description": "Generate game character animations from text descriptions. Creates sprite sheets for Phaser and Godot.",
       "author": {"name": "WitMani"},
