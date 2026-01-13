@@ -6,7 +6,7 @@ Generate game character animations with AI. Text to sprite sheet in seconds.
 
 - Text-to-animation generation
 - Export to Phaser & Godot formats
-- Multiple AI providers (fal.ai, Gemini, Doubao)
+- Multiple AI providers (fal.ai, Gemini)
 - Zero config - auto-detects your API key
 - Open source (MIT)
 
@@ -30,11 +30,8 @@ Generate game character animations with AI. Text to sprite sheet in seconds.
    # Option A: fal.ai (recommended)
    export FAL_KEY="your-key"
 
-   # Option B: Gemini
+   # Option B: Gemini (generous free tier)
    export GEMINI_API_KEY="your-key"
-
-   # Option C: Doubao
-   export DOUBAO_API_KEY="your-key"
    ```
 
 2. **Generate animation**:
@@ -98,7 +95,6 @@ this.anims.create({
 |----------|---------|----------|
 | fal.ai | `FAL_KEY` | Quality, speed |
 | Gemini | `GEMINI_API_KEY` | Free tier |
-| Doubao | `DOUBAO_API_KEY` | Asia users |
 
 ## Requirements
 

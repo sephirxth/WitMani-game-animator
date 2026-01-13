@@ -38,8 +38,6 @@ if [ -n "$FAL_KEY" ]; then
   PROVIDER="fal"
 elif [ -n "$GEMINI_API_KEY" ]; then
   PROVIDER="gemini"
-elif [ -n "$DOUBAO_API_KEY" ]; then
-  PROVIDER="doubao"
 else
   PROVIDER="none"
 fi
@@ -53,7 +51,7 @@ Welcome to WitMani Game Animator!
 
 To get started, set up one API key (takes 2 minutes):
 
-Option A: fal.ai (recommended)
+Option A: fal.ai (recommended - best quality)
   1. Visit https://fal.ai/dashboard/keys
   2. Create a key
   3. Run: export FAL_KEY="your-key"
@@ -62,11 +60,6 @@ Option B: Gemini (generous free tier)
   1. Visit https://aistudio.google.com/apikey
   2. Create a key
   3. Run: export GEMINI_API_KEY="your-key"
-
-Option C: Doubao
-  1. Visit https://console.volcengine.com/
-  2. Create a key
-  3. Run: export DOUBAO_API_KEY="your-key"
 
 Then try: /animate "pixel knight" "running"
 ```

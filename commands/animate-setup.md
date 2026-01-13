@@ -32,11 +32,9 @@ fi
 ```bash
 FAL_STATUS="not set"
 GEMINI_STATUS="not set"
-DOUBAO_STATUS="not set"
 
 [ -n "$FAL_KEY" ] && FAL_STATUS="configured"
 [ -n "$GEMINI_API_KEY" ] && GEMINI_STATUS="configured"
-[ -n "$DOUBAO_API_KEY" ] && DOUBAO_STATUS="configured"
 ```
 
 ### Step 3: Display Results
@@ -52,7 +50,6 @@ DEPENDENCIES
 API KEYS (need at least one)
   FAL_KEY:         [FAL_STATUS]
   GEMINI_API_KEY:  [GEMINI_STATUS]
-  DOUBAO_API_KEY:  [DOUBAO_STATUS]
 ```
 
 ### Step 4: Show Setup Guide (if needed)
@@ -84,11 +81,6 @@ Option B: Gemini (generous free tier)
   1. Go to https://aistudio.google.com/apikey
   2. Click "Create API Key"
   3. Run: export GEMINI_API_KEY="your-key-here"
-
-Option C: Doubao (good for Asia)
-  1. Go to https://console.volcengine.com/
-  2. Create an API key
-  3. Run: export DOUBAO_API_KEY="your-key-here"
 
 Tip: Add the export to your ~/.bashrc or ~/.zshrc to make it permanent.
 ```
