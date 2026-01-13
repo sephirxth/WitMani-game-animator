@@ -1,0 +1,20 @@
+{
+  "name": "game-animator",
+  "version": "0.1.0",
+  "description": "Generate game character animations from text descriptions. Create sprite sheets for Phaser, Godot, and more.",
+  "author": {
+    "name": "WitMani"
+  },
+  "keywords": [
+    "game",
+    "animation",
+    "sprite",
+    "phaser",
+    "godot",
+    "pixel-art",
+    "gamedev"
+  ],
+  "homepage": "https://github.com/anthropics/claude-code",
+  "license": "MIT",
+  "commands": ["./commands"]
+}
