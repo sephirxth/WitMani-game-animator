@@ -80,13 +80,13 @@ curl -s "$IMAGE_URL" -o "$OUTPUT_DIR/character.png"
 echo "Character image saved"
 ```
 
-### Step 3a: Remove Background (fal BiRefNet)
+### Step 3a: Remove Background (Bria RMBG 2.0)
 
 ```bash
-curl -s "https://fal.run/fal-ai/birefnet" \
+curl -s "https://fal.run/fal-ai/bria/background/remove" \
   -H "Authorization: Key $FAL_KEY" \
   -H "Content-Type: application/json" \
-  -d "{\"image_url\": \"$IMAGE_URL\", \"model\": \"General Use (Heavy)\"}" > "$OUTPUT_DIR/bg_response.json"
+  -d "{\"image_url\": \"$IMAGE_URL\"}" > "$OUTPUT_DIR/bg_response.json"
 
 TRANSPARENT_URL=$(jq -r '.image.url' "$OUTPUT_DIR/bg_response.json")
 curl -s "$TRANSPARENT_URL" -o "$OUTPUT_DIR/character_transparent.png"
@@ -194,16 +194,16 @@ done
 echo "Chromakey applied"
 ```
 
-**Method B: If chromakey fails (no green background), use BiRefNet in parallel**
+**Method B: If chromakey fails (no green background), use Bria RMBG 2.0 in parallel**
 
-Check if frames have transparency after chromakey. If not, fall back to BiRefNet:
+Check if frames have transparency after chromakey. If not, fall back to Bria RMBG 2.0:
 
 ```bash
 # Check if chromakey worked (file should have alpha channel)
 HAS_ALPHA=$(ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt -of default=noprint_wrappers=1:nokey=1 "$OUTPUT_DIR/frames_clean/frame_0001.png" 2>/dev/null | grep -c "rgba")
 
 if [ "$HAS_ALPHA" -eq 0 ]; then
-  echo "Chromakey failed, using BiRefNet..."
+  echo "Chromakey failed, using Bria RMBG 2.0..."
 
   for f in "$OUTPUT_DIR/frames/"frame_*.png; do
     FRAME_NAME=$(basename "$f")
@@ -211,10 +211,10 @@ if [ "$HAS_ALPHA" -eq 0 ]; then
       TEMP_JSON=$(mktemp)
       echo "{\"image_url\": \"data:image/png;base64,$(base64 -w 0 "$f")\"}" > "$TEMP_JSON"
 
-      RESPONSE=$(curl -s "https://fal.run/fal-ai/birefnet" \
+      RESPONSE=$(curl -s "https://fal.run/fal-ai/bria/background/remove" \
         -H "Authorization: Key $FAL_KEY" \
         -H "Content-Type: application/json" \
-        -d "$(jq -c '. + {model: "General Use (Heavy)"}' "$TEMP_JSON")")
+        -d @"$TEMP_JSON")
 
       rm "$TEMP_JSON"
 
@@ -226,6 +226,12 @@ if [ "$HAS_ALPHA" -eq 0 ]; then
     ) &
   done
   wait
+
+  # Apply despill to remove green edge artifacts
+  for f in "$OUTPUT_DIR/frames_clean/"frame_*.png; do
+    ffmpeg -i "$f" -vf "despill=green" -c:v png "$f.tmp" -y 2>/dev/null && mv "$f.tmp" "$f"
+  done
+  echo "Despill applied"
 fi
 ```
 
