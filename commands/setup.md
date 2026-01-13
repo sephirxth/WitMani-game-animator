@@ -115,9 +115,54 @@ Also export in current session so it works immediately:
 export FAL_KEY="user-provided-key"
 ```
 
-### Step 6: Ready Message
+### Step 6: Configure Background Removal Method
+
+Use AskUserQuestion tool to let user choose frame background removal method:
+
+Question: "选择抠图方式 (帧背景移除)"
+Options:
+- "Bria RMBG 2.0 (默认，稳定可靠，~60秒)" - AI抠图，效果稳定
+- "Chromakey (快速，~2秒)" - 绿幕抠图，依赖视频绿幕质量
+- "Auto (智能选择)" - 先尝试chromakey，失败自动切换Bria
+
+Save the choice to config:
+```bash
+# Append to config file (bria/chromakey/auto)
+mkdir -p "$HOME/.config/witmani"
+# Remove old BG_REMOVAL setting if exists
+grep -v "BG_REMOVAL" "$HOME/.config/witmani/config" > "$HOME/.config/witmani/config.tmp" 2>/dev/null || true
+mv "$HOME/.config/witmani/config.tmp" "$HOME/.config/witmani/config" 2>/dev/null || true
+echo 'export BG_REMOVAL="user-choice"' >> "$HOME/.config/witmani/config"
+echo "Background removal method saved"
+```
+
+### Step 7: Install Preview HTML
+
+Copy the preview template to config directory:
+
+```bash
+# Get plugin directory (where this command is located)
+PLUGIN_DIR="$HOME/.claude/plugins/marketplaces/game-animator/assets"
+PREVIEW_SRC="$PLUGIN_DIR/preview.html"
+PREVIEW_DEST="$HOME/.config/witmani/preview.html"
+
+if [ -f "$PREVIEW_SRC" ]; then
+  cp "$PREVIEW_SRC" "$PREVIEW_DEST"
+  echo "Preview installed: $PREVIEW_DEST"
+else
+  echo "Preview HTML not found in plugin, downloading..."
+  curl -s "https://raw.githubusercontent.com/sephirxth/WitMani-game-animator/main/assets/preview.html" -o "$PREVIEW_DEST"
+fi
+```
+
+### Step 8: Ready Message
 
 If everything is configured:
 ```
-Ready! Try: /witmani:animate "pixel knight" "running right"
+Setup complete!
+
+Config: ~/.config/witmani/config
+Preview: ~/.config/witmani/preview.html
+
+Try: /witmani:animate "pixel knight" "running right"
 ```

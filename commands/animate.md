@@ -43,6 +43,10 @@ else
   PROVIDER="none"
 fi
 echo "Provider: $PROVIDER"
+
+# Background removal method (default: bria)
+BG_REMOVAL="${BG_REMOVAL:-bria}"
+echo "BG Removal: $BG_REMOVAL"
 ```
 
 **If PROVIDER is "none"**: Use Skill tool to invoke `/witmani:setup` automatically, then return to continue after setup is complete.
@@ -181,64 +185,93 @@ ffmpeg -i "$OUTPUT_DIR/animation.mp4" -vf "fps=$EXTRACT_FPS" -frames:v $FRAME_CO
 echo "Extracted $FRAME_COUNT frames"
 ```
 
-### Step 5.5: Remove Background (Hybrid: Chromakey + BiRefNet + Cleanup)
+### Step 5.5: Remove Background (based on BG_REMOVAL config)
 
-**Method A: Try ffmpeg chromakey first (fast, works if green background)**
+Execute based on `$BG_REMOVAL` setting (bria/chromakey/auto):
+
+**If BG_REMOVAL="chromakey" (fast, ~2s)**
 
 ```bash
 for f in "$OUTPUT_DIR/frames/"frame_*.png; do
   FRAME_NAME=$(basename "$f")
-  # Chromakey green + clean up edges
   ffmpeg -i "$f" -vf "chromakey=0x00FF00:0.3:0.1,despill=green" -c:v png "$OUTPUT_DIR/frames_clean/$FRAME_NAME" -y 2>/dev/null
 done
 echo "Chromakey applied"
 ```
 
-**Method B: If chromakey fails (no green background), use Bria RMBG 2.0 in parallel**
-
-Check if frames have transparency after chromakey. If not, fall back to Bria RMBG 2.0:
+**If BG_REMOVAL="bria" (default, stable, ~60s)**
 
 ```bash
-# Check if chromakey worked (file should have alpha channel)
+echo "Using Bria RMBG 2.0 for background removal..."
+for f in "$OUTPUT_DIR/frames/"frame_*.png; do
+  FRAME_NAME=$(basename "$f")
+  (
+    TEMP_JSON=$(mktemp)
+    echo "{\"image_url\": \"data:image/png;base64,$(base64 -w 0 "$f")\"}" > "$TEMP_JSON"
+
+    RESPONSE=$(curl -s "https://fal.run/fal-ai/bria/background/remove" \
+      -H "Authorization: Key $FAL_KEY" \
+      -H "Content-Type: application/json" \
+      -d @"$TEMP_JSON")
+
+    rm "$TEMP_JSON"
+
+    TRANSPARENT_URL=$(echo "$RESPONSE" | jq -r '.image.url')
+    if [ "$TRANSPARENT_URL" != "null" ]; then
+      curl -s "$TRANSPARENT_URL" -o "$OUTPUT_DIR/frames_clean/$FRAME_NAME"
+    fi
+    echo "Processed: $FRAME_NAME"
+  ) &
+done
+wait
+
+# Apply despill to remove any green edge artifacts
+for f in "$OUTPUT_DIR/frames_clean/"frame_*.png; do
+  ffmpeg -i "$f" -vf "despill=green" -c:v png "$f.tmp" -y 2>/dev/null && mv "$f.tmp" "$f"
+done
+echo "Bria RMBG 2.0 completed"
+```
+
+**If BG_REMOVAL="auto" (try chromakey first, fallback to bria)**
+
+```bash
+# First try chromakey
+for f in "$OUTPUT_DIR/frames/"frame_*.png; do
+  FRAME_NAME=$(basename "$f")
+  ffmpeg -i "$f" -vf "chromakey=0x00FF00:0.3:0.1,despill=green" -c:v png "$OUTPUT_DIR/frames_clean/$FRAME_NAME" -y 2>/dev/null
+done
+
+# Check if chromakey worked
 HAS_ALPHA=$(ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt -of default=noprint_wrappers=1:nokey=1 "$OUTPUT_DIR/frames_clean/frame_0001.png" 2>/dev/null | grep -c "rgba")
 
 if [ "$HAS_ALPHA" -eq 0 ]; then
-  echo "Chromakey failed, using Bria RMBG 2.0..."
-
+  echo "Chromakey failed, falling back to Bria RMBG 2.0..."
+  # Run Bria RMBG 2.0 (same as above)
   for f in "$OUTPUT_DIR/frames/"frame_*.png; do
     FRAME_NAME=$(basename "$f")
     (
       TEMP_JSON=$(mktemp)
       echo "{\"image_url\": \"data:image/png;base64,$(base64 -w 0 "$f")\"}" > "$TEMP_JSON"
-
       RESPONSE=$(curl -s "https://fal.run/fal-ai/bria/background/remove" \
-        -H "Authorization: Key $FAL_KEY" \
-        -H "Content-Type: application/json" \
-        -d @"$TEMP_JSON")
-
+        -H "Authorization: Key $FAL_KEY" -H "Content-Type: application/json" -d @"$TEMP_JSON")
       rm "$TEMP_JSON"
-
       TRANSPARENT_URL=$(echo "$RESPONSE" | jq -r '.image.url')
-      if [ "$TRANSPARENT_URL" != "null" ]; then
-        curl -s "$TRANSPARENT_URL" -o "$OUTPUT_DIR/frames_clean/$FRAME_NAME"
-      fi
+      [ "$TRANSPARENT_URL" != "null" ] && curl -s "$TRANSPARENT_URL" -o "$OUTPUT_DIR/frames_clean/$FRAME_NAME"
       echo "Processed: $FRAME_NAME"
     ) &
   done
   wait
-
-  # Apply despill to remove green edge artifacts
   for f in "$OUTPUT_DIR/frames_clean/"frame_*.png; do
     ffmpeg -i "$f" -vf "despill=green" -c:v png "$f.tmp" -y 2>/dev/null && mv "$f.tmp" "$f"
   done
-  echo "Despill applied"
+else
+  echo "Chromakey succeeded"
 fi
 ```
 
-**Method C: Post-process to clean up any remaining artifacts**
+**Post-process: Clean up edges**
 
 ```bash
-# Clean up semi-transparent edges (threshold alpha)
 for f in "$OUTPUT_DIR/frames_clean/"frame_*.png; do
   ffmpeg -i "$f" -vf "geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lt(alpha(X,Y),200),0,255)'" -c:v png "$f.tmp" -y 2>/dev/null && mv "$f.tmp" "$f"
 done
@@ -323,6 +356,10 @@ Output folder: $OUTPUT_DIR/
 Frame size: ${FRAME_WIDTH}x${FRAME_HEIGHT}
 Total frames: $FRAME_COUNT
 FPS: $FPS
+
+Preview in browser:
+  Open ~/.config/witmani/preview.html and drag the sprite sheet to preview.
+  Or: file://$HOME/.config/witmani/preview.html
 
 Phaser usage:
   this.load.spritesheet('${CHARACTER_NAME}', '${CHARACTER_NAME}.png', {

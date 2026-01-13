@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>WitMani Animation Preview</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    h1 { text-align: center; margin-bottom: 20px; color: #8b5cf6; }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .panel { background: #252542; border-radius: 12px; padding: 20px; }
+    .panel h3 { margin-bottom: 15px; color: #a78bfa; }
+
+    .drop-zone { border: 2px dashed #4c4c6d; border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s; }
+    .drop-zone:hover, .drop-zone.dragover { border-color: #8b5cf6; background: #2d2d4a; }
+    .drop-zone input { display: none; }
+    .drop-zone img { max-width: 100%; max-height: 150px; margin-top: 10px; border-radius: 4px; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; margin-bottom: 5px; font-size: 12px; color: #888; }
+    .form-group input { width: 100%; padding: 8px; border: 1px solid #4c4c6d; border-radius: 6px; background: #1a1a2e; color: #eee; }
+
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+    .tab { padding: 10px 20px; border-radius: 8px; background: #252542; cursor: pointer; transition: all 0.3s; }
+    .tab.active { background: #8b5cf6; }
+    .tab:hover { background: #3d3d5c; }
+    .tab.active:hover { background: #7c3aed; }
+
+    .preview-area { background: #252542; border-radius: 12px; overflow: hidden; min-height: 400px; position: relative; }
+    #phaser-container, #babylon-container { width: 100%; height: 400px; }
+    #babylon-container { display: none; }
+
+    .btn { padding: 12px 24px; border: none; border-radius: 8px; background: #8b5cf6; color: white; cursor: pointer; font-size: 14px; transition: all 0.3s; }
+    .btn:hover { background: #7c3aed; }
+    .btn:disabled { background: #4c4c6d; cursor: not-allowed; }
+
+    .info { margin-top: 20px; padding: 15px; background: #252542; border-radius: 8px; font-size: 12px; color: #888; }
+    .info code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; color: #a78bfa; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>WitMani Animation Preview</h1>
+
+    <div class="controls">
+      <div class="panel">
+        <h3>Sprite Sheet</h3>
+        <div class="drop-zone" id="dropZone">
+          <p>Drop sprite sheet here or click to select</p>
+          <input type="file" id="fileInput" accept="image/*">
+          <img id="preview" style="display:none">
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Animation Settings</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Frame Width</label>
+            <input type="number" id="frameWidth" value="512" min="1">
+          </div>
+          <div class="form-group">
+            <label>Frame Height</label>
+            <input type="number" id="frameHeight" value="512" min="1">
+          </div>
+          <div class="form-group">
+            <label>Total Frames</label>
+            <input type="number" id="frameCount" value="8" min="1">
+          </div>
+          <div class="form-group">
+            <label>FPS</label>
+            <input type="number" id="fps" value="10" min="1" max="60">
+          </div>
+        </div>
+        <button class="btn" id="playBtn" disabled>Play Animation</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-engine="phaser">Phaser 3</div>
+      <div class="tab" data-engine="babylon">Babylon.js</div>
+    </div>
+
+    <div class="preview-area">
+      <div id="phaser-container"></div>
+      <canvas id="babylon-container"></canvas>
+    </div>
+
+    <div class="info">
+      <strong>Usage:</strong> Load a sprite sheet from <code>/witmani:animate</code> output, adjust frame settings, and click Play.
+      <br>JSON config will auto-fill settings if dropped together with the sprite sheet.
+    </div>
+  </div>
+
+  <script>
+    let spriteDataUrl = null;
+    let phaserGame = null;
+    let babylonEngine = null;
+    let currentEngine = 'phaser';
+
+    // Drop zone handling
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const previewImg = document.getElementById('preview');
+    const playBtn = document.getElementById('playBtn');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', handleDrop);
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    function handleDrop(e) {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      handleFiles(e.dataTransfer.files);
+    }
+
+    function handleFiles(files) {
+      for (const file of files) {
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            spriteDataUrl = e.target.result;
+            previewImg.src = spriteDataUrl;
+            previewImg.style.display = 'block';
+            playBtn.disabled = false;
+
+            // Auto-detect frame size from image
+            const img = new Image();
+            img.onload = () => {
+              const frameCount = parseInt(document.getElementById('frameCount').value);
+              const cols = Math.min(frameCount, 8);
+              document.getElementById('frameWidth').value = Math.floor(img.width / cols);
+              document.getElementById('frameHeight').value = Math.floor(img.height / Math.ceil(frameCount / cols));
+            };
+            img.src = spriteDataUrl;
+          };
+          reader.readAsDataURL(file);
+        } else if (file.name.endsWith('.json')) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const config = JSON.parse(e.target.result);
+              if (config.frameWidth) document.getElementById('frameWidth').value = config.frameWidth;
+              if (config.frameHeight) document.getElementById('frameHeight').value = config.frameHeight;
+              if (config.totalFrames) document.getElementById('frameCount').value = config.totalFrames;
+              if (config.animations?.[0]?.frameRate) document.getElementById('fps').value = config.animations[0].frameRate;
+            } catch (err) { console.error('Invalid JSON config'); }
+          };
+          reader.readAsText(file);
+        }
+      }
+    }
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentEngine = tab.dataset.engine;
+
+        document.getElementById('phaser-container').style.display = currentEngine === 'phaser' ? 'block' : 'none';
+        document.getElementById('babylon-container').style.display = currentEngine === 'babylon' ? 'block' : 'none';
+
+        if (spriteDataUrl) playAnimation();
+      });
+    });
+
+    // Play button
+    playBtn.addEventListener('click', playAnimation);
+
+    function playAnimation() {
+      const frameWidth = parseInt(document.getElementById('frameWidth').value);
+      const frameHeight = parseInt(document.getElementById('frameHeight').value);
+      const frameCount = parseInt(document.getElementById('frameCount').value);
+      const fps = parseInt(document.getElementById('fps').value);
+
+      if (currentEngine === 'phaser') {
+        playPhaser(frameWidth, frameHeight, frameCount, fps);
+      } else {
+        playBabylon(frameWidth, frameHeight, frameCount, fps);
+      }
+    }
+
+    function playPhaser(frameWidth, frameHeight, frameCount, fps) {
+      if (phaserGame) phaserGame.destroy(true);
+
+      const config = {
+        type: Phaser.AUTO,
+        parent: 'phaser-container',
+        width: 512,
+        height: 400,
+        backgroundColor: '#1a1a2e',
+        scene: {
+          preload: function() {
+            this.textures.addBase64('sprite', spriteDataUrl);
+          },
+          create: function() {
+            const texture = this.textures.get('sprite');
+            const cols = Math.min(frameCount, 8);
+
+            // Add spritesheet frames manually
+            Phaser.Textures.Parsers.SpriteSheet(texture, 0, 0, 0, texture.source[0].width, texture.source[0].height, {
+              frameWidth: frameWidth,
+              frameHeight: frameHeight
+            });
+
+            this.anims.create({
+              key: 'play',
+              frames: this.anims.generateFrameNumbers('sprite', { start: 0, end: frameCount - 1 }),
+              frameRate: fps,
+              repeat: -1
+            });
+
+            const sprite = this.add.sprite(256, 200, 'sprite');
+            const scale = Math.min(400 / frameHeight, 400 / frameWidth) * 0.8;
+            sprite.setScale(scale);
+            sprite.play('play');
+          }
+        }
+      };
+
+      phaserGame = new Phaser.Game(config);
+    }
+
+    function playBabylon(frameWidth, frameHeight, frameCount, fps) {
+      const canvas = document.getElementById('babylon-container');
+      if (babylonEngine) babylonEngine.dispose();
+
+      babylonEngine = new BABYLON.Engine(canvas, true);
+      const scene = new BABYLON.Scene(babylonEngine);
+      scene.clearColor = new BABYLON.Color4(0.1, 0.1, 0.18, 1);
+
+      const camera = new BABYLON.FreeCamera('camera', new BABYLON.Vector3(0, 0, -5), scene);
+      const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0), scene);
+
+      const cols = Math.min(frameCount, 8);
+      const rows = Math.ceil(frameCount / cols);
+
+      const spriteManager = new BABYLON.SpriteManager('sm', spriteDataUrl, 1, { width: frameWidth, height: frameHeight }, scene);
+      spriteManager.cellWidth = frameWidth;
+      spriteManager.cellHeight = frameHeight;
+
+      const sprite = new BABYLON.Sprite('sprite', spriteManager);
+      sprite.size = 3;
+      sprite.playAnimation(0, frameCount - 1, true, 1000 / fps);
+
+      babylonEngine.runRenderLoop(() => scene.render());
+      window.addEventListener('resize', () => babylonEngine.resize());
+    }
+  </script>
+</body>
+</html>
