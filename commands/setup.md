@@ -136,33 +136,13 @@ echo 'export BG_REMOVAL="user-choice"' >> "$HOME/.config/witmani/config"
 echo "Background removal method saved"
 ```
 
-### Step 7: Install Preview HTML
-
-Copy the preview template to config directory:
-
-```bash
-# Get plugin directory (where this command is located)
-PLUGIN_DIR="$HOME/.claude/plugins/marketplaces/game-animator/assets"
-PREVIEW_SRC="$PLUGIN_DIR/preview.html"
-PREVIEW_DEST="$HOME/.config/witmani/preview.html"
-
-if [ -f "$PREVIEW_SRC" ]; then
-  cp "$PREVIEW_SRC" "$PREVIEW_DEST"
-  echo "Preview installed: $PREVIEW_DEST"
-else
-  echo "Preview HTML not found in plugin, downloading..."
-  curl -s "https://raw.githubusercontent.com/sephirxth/WitMani-game-animator/main/assets/preview.html" -o "$PREVIEW_DEST"
-fi
-```
-
-### Step 8: Ready Message
+### Step 7: Ready Message
 
 If everything is configured:
 ```
 Setup complete!
 
 Config: ~/.config/witmani/config
-Preview: ~/.config/witmani/preview.html
 
 Try: /witmani:animate "pixel knight" "running right"
 ```

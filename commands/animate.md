@@ -345,10 +345,7 @@ EOF
 ### Step 9: Copy Preview HTML to Output
 
 ```bash
-PREVIEW_SRC="$HOME/.config/witmani/preview.html"
-if [ ! -f "$PREVIEW_SRC" ]; then
-  PREVIEW_SRC="$HOME/.claude/plugins/marketplaces/game-animator/assets/preview.html"
-fi
+PREVIEW_SRC="$HOME/.claude/plugins/marketplaces/game-animator/assets/preview.html"
 if [ -f "$PREVIEW_SRC" ]; then
   cp "$PREVIEW_SRC" "$OUTPUT_DIR/preview.html"
   echo "Preview copied to output"
