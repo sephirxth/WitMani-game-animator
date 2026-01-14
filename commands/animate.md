@@ -290,11 +290,11 @@ ffmpeg -i "$FRAMES_DIR/frame_%04d.png" -filter_complex "tile=${COLS}x${ROWS}" "$
 echo "Sprite sheet created"
 ```
 
-### Step 7: Create Preview GIF
+### Step 7: Create Preview GIF (with transparency)
 
 ```bash
 FPS=<FPS>  # from --fps or default 10
-ffmpeg -i "$FRAMES_DIR/frame_%04d.png" -vf "fps=$FPS,scale=128:-1:flags=lanczos" -loop 0 "$OUTPUT_DIR/${CHARACTER_NAME}.gif" -y 2>/dev/null
+ffmpeg -i "$FRAMES_DIR/frame_%04d.png" -vf "fps=$FPS,scale=128:-1:flags=lanczos,split[s0][s1];[s0]palettegen=reserve_transparent=1[p];[s1][p]paletteuse=alpha_threshold=128" -loop 0 "$OUTPUT_DIR/${CHARACTER_NAME}.gif" -y 2>/dev/null
 echo "Preview GIF created"
 ```
 

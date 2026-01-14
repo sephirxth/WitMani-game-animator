@@ -2,7 +2,12 @@
 
 Generate game character animations with AI. Text to sprite sheet in seconds.
 
-![Demo](https://via.placeholder.com/600x200?text=Demo+GIF+Coming+Soon)
+<p align="center">
+  <img src="assets/demo_slime.gif" alt="Slime bouncing" width="128">
+  <img src="assets/demo_fire_mage.gif" alt="Fire Mage casting" width="128">
+  <img src="assets/demo_cyber_samurai.gif" alt="Cyber Samurai attack" width="128">
+</p>
+<p align="center"><i>Slime · Fire Mage · Cyber Samurai</i></p>
 
 ## Features
 

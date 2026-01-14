@@ -180,8 +180,9 @@
       <div class="panel">
         <h3>Sprite Sheet</h3>
         <div class="drop-zone" id="dropZone">
-          <p>Drop sprite sheet here or click to select</p>
-          <input type="file" id="fileInput" accept="image/*">
+          <p>Drop <strong>.png</strong> sprite sheet here</p>
+          <p style="font-size:12px;margin-top:4px">(or drop <strong>.json</strong> config to auto-fill settings)</p>
+          <input type="file" id="fileInput" accept="image/*,.json" multiple>
           <img id="preview" style="display:none">
         </div>
       </div>
