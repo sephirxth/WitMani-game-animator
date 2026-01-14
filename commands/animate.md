@@ -342,14 +342,21 @@ animations = [{
 EOF
 ```
 
-### Step 9: Copy Preview HTML with Auto-Load Config
+### Step 9: Copy Preview HTML with Embedded Data
 
 ```bash
 PREVIEW_SRC="$HOME/.claude/plugins/marketplaces/game-animator/assets/preview.html"
 if [ -f "$PREVIEW_SRC" ]; then
-  # Inject AUTO_CONFIG with actual filenames
-  sed "s|const AUTO_CONFIG = null;|const AUTO_CONFIG = {\"sprite\": \"${CHARACTER_NAME}.png\", \"config\": \"${CHARACTER_NAME}.json\"};|" "$PREVIEW_SRC" > "$OUTPUT_DIR/preview.html"
-  echo "Preview copied with auto-load config"
+  # Encode sprite sheet as base64
+  SPRITE_BASE64=$(base64 -w 0 "$OUTPUT_DIR/${CHARACTER_NAME}.png")
+  # Read config JSON
+  CONFIG_JSON=$(cat "$OUTPUT_DIR/${CHARACTER_NAME}.json")
+
+  # Inject into preview.html
+  sed -e "s|const AUTO_SPRITE_BASE64 = null;|const AUTO_SPRITE_BASE64 = \"$SPRITE_BASE64\";|" \
+      -e "s|const AUTO_CONFIG_JSON = null;|const AUTO_CONFIG_JSON = $CONFIG_JSON;|" \
+      "$PREVIEW_SRC" > "$OUTPUT_DIR/preview.html"
+  echo "Preview created with embedded animation"
 fi
 ```
 

@@ -227,8 +227,9 @@
   </div>
 
   <script>
-    // Auto-load config (injected by animate command)
-    const AUTO_CONFIG = null; // Will be replaced: {"sprite": "xxx.png", "config": "xxx.json"}
+    // Auto-load config (injected by animate command as base64)
+    const AUTO_SPRITE_BASE64 = null; // Will be replaced with actual base64
+    const AUTO_CONFIG_JSON = null; // Will be replaced with actual config object
 
     let spriteDataUrl = null;
     let phaserGame = null;
@@ -241,40 +242,24 @@
     const playBtn = document.getElementById('playBtn');
 
     // Auto-load on page load
-    window.addEventListener('DOMContentLoaded', async () => {
-      if (AUTO_CONFIG) {
-        try {
-          // Load config JSON
-          const configRes = await fetch(AUTO_CONFIG.config);
-          const config = await configRes.json();
-          if (config.frameWidth) document.getElementById('frameWidth').value = config.frameWidth;
-          if (config.frameHeight) document.getElementById('frameHeight').value = config.frameHeight;
-          if (config.totalFrames) document.getElementById('frameCount').value = config.totalFrames;
-          if (config.animations?.[0]?.frameRate) document.getElementById('fps').value = config.animations[0].frameRate;
+    window.addEventListener('DOMContentLoaded', () => {
+      if (AUTO_SPRITE_BASE64 && AUTO_CONFIG_JSON) {
+        // Apply config
+        if (AUTO_CONFIG_JSON.frameWidth) document.getElementById('frameWidth').value = AUTO_CONFIG_JSON.frameWidth;
+        if (AUTO_CONFIG_JSON.frameHeight) document.getElementById('frameHeight').value = AUTO_CONFIG_JSON.frameHeight;
+        if (AUTO_CONFIG_JSON.totalFrames) document.getElementById('frameCount').value = AUTO_CONFIG_JSON.totalFrames;
+        if (AUTO_CONFIG_JSON.animations?.[0]?.frameRate) document.getElementById('fps').value = AUTO_CONFIG_JSON.animations[0].frameRate;
 
-          // Load sprite image
-          const imgRes = await fetch(AUTO_CONFIG.sprite);
-          const blob = await imgRes.blob();
-          spriteDataUrl = await blobToDataURL(blob);
-          previewImg.src = spriteDataUrl;
-          previewImg.style.display = 'block';
-          playBtn.disabled = false;
+        // Load sprite
+        spriteDataUrl = 'data:image/png;base64,' + AUTO_SPRITE_BASE64;
+        previewImg.src = spriteDataUrl;
+        previewImg.style.display = 'block';
+        playBtn.disabled = false;
 
-          // Auto-play
-          setTimeout(() => playAnimation(), 100);
-        } catch (e) {
-          console.log('Auto-load failed, manual mode:', e);
-        }
+        // Auto-play
+        setTimeout(() => playAnimation(), 100);
       }
     });
-
-    function blobToDataURL(blob) {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.readAsDataURL(blob);
-      });
-    }
 
     dropZone.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
