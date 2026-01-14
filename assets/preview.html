@@ -196,21 +196,23 @@
         parent: 'phaser-container',
         width: 512,
         height: 400,
+        transparent: true,
         backgroundColor: '#1a1a2e',
         scene: {
           preload: function() {
-            this.textures.addBase64('sprite', spriteDataUrl);
+            // Convert base64 to blob URL for proper loading
+            const byteString = atob(spriteDataUrl.split(',')[1]);
+            const mimeType = spriteDataUrl.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+              ia[i] = byteString.charCodeAt(i);
+            }
+            const blob = new Blob([ab], { type: mimeType });
+            const blobUrl = URL.createObjectURL(blob);
+            this.load.spritesheet('sprite', blobUrl, { frameWidth: frameWidth, frameHeight: frameHeight });
           },
           create: function() {
-            const texture = this.textures.get('sprite');
-            const cols = Math.min(frameCount, 8);
-
-            // Add spritesheet frames manually
-            Phaser.Textures.Parsers.SpriteSheet(texture, 0, 0, 0, texture.source[0].width, texture.source[0].height, {
-              frameWidth: frameWidth,
-              frameHeight: frameHeight
-            });
-
             this.anims.create({
               key: 'play',
               frames: this.anims.generateFrameNumbers('sprite', { start: 0, end: frameCount - 1 }),
