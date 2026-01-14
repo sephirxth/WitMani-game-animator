@@ -347,16 +347,27 @@ EOF
 ```bash
 PREVIEW_SRC="$HOME/.claude/plugins/marketplaces/game-animator/assets/preview.html"
 if [ -f "$PREVIEW_SRC" ]; then
-  # Encode sprite sheet as base64
-  SPRITE_BASE64=$(base64 -w 0 "$OUTPUT_DIR/${CHARACTER_NAME}.png")
-  # Read config JSON
-  CONFIG_JSON=$(cat "$OUTPUT_DIR/${CHARACTER_NAME}.json")
+  # Use Python to inject base64 (handles large files)
+  python3 << PYEOF
+import base64, json
 
-  # Inject into preview.html
-  sed -e "s|const AUTO_SPRITE_BASE64 = null;|const AUTO_SPRITE_BASE64 = \"$SPRITE_BASE64\";|" \
-      -e "s|const AUTO_CONFIG_JSON = null;|const AUTO_CONFIG_JSON = $CONFIG_JSON;|" \
-      "$PREVIEW_SRC" > "$OUTPUT_DIR/preview.html"
-  echo "Preview created with embedded animation"
+with open("$OUTPUT_DIR/${CHARACTER_NAME}.png", "rb") as f:
+    sprite_b64 = base64.b64encode(f.read()).decode()
+
+with open("$OUTPUT_DIR/${CHARACTER_NAME}.json", "r") as f:
+    config_json = f.read().strip()
+
+with open("$PREVIEW_SRC", "r") as f:
+    html = f.read()
+
+html = html.replace('const AUTO_SPRITE_BASE64 = null;', f'const AUTO_SPRITE_BASE64 = "{sprite_b64}";')
+html = html.replace('const AUTO_CONFIG_JSON = null;', f'const AUTO_CONFIG_JSON = {config_json};')
+
+with open("$OUTPUT_DIR/preview.html", "w") as f:
+    f.write(html)
+
+print("Preview created with embedded animation")
+PYEOF
 fi
 ```
 
