@@ -227,6 +227,9 @@
   </div>
 
   <script>
+    // Auto-load config (injected by animate command)
+    const AUTO_CONFIG = null; // Will be replaced: {"sprite": "xxx.png", "config": "xxx.json"}
+
     let spriteDataUrl = null;
     let phaserGame = null;
     let babylonEngine = null;
@@ -236,6 +239,42 @@
     const fileInput = document.getElementById('fileInput');
     const previewImg = document.getElementById('preview');
     const playBtn = document.getElementById('playBtn');
+
+    // Auto-load on page load
+    window.addEventListener('DOMContentLoaded', async () => {
+      if (AUTO_CONFIG) {
+        try {
+          // Load config JSON
+          const configRes = await fetch(AUTO_CONFIG.config);
+          const config = await configRes.json();
+          if (config.frameWidth) document.getElementById('frameWidth').value = config.frameWidth;
+          if (config.frameHeight) document.getElementById('frameHeight').value = config.frameHeight;
+          if (config.totalFrames) document.getElementById('frameCount').value = config.totalFrames;
+          if (config.animations?.[0]?.frameRate) document.getElementById('fps').value = config.animations[0].frameRate;
+
+          // Load sprite image
+          const imgRes = await fetch(AUTO_CONFIG.sprite);
+          const blob = await imgRes.blob();
+          spriteDataUrl = await blobToDataURL(blob);
+          previewImg.src = spriteDataUrl;
+          previewImg.style.display = 'block';
+          playBtn.disabled = false;
+
+          // Auto-play
+          setTimeout(() => playAnimation(), 100);
+        } catch (e) {
+          console.log('Auto-load failed, manual mode:', e);
+        }
+      }
+    });
+
+    function blobToDataURL(blob) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    }
 
     dropZone.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });

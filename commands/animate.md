@@ -342,13 +342,14 @@ animations = [{
 EOF
 ```
 
-### Step 9: Copy Preview HTML to Output
+### Step 9: Copy Preview HTML with Auto-Load Config
 
 ```bash
 PREVIEW_SRC="$HOME/.claude/plugins/marketplaces/game-animator/assets/preview.html"
 if [ -f "$PREVIEW_SRC" ]; then
-  cp "$PREVIEW_SRC" "$OUTPUT_DIR/preview.html"
-  echo "Preview copied to output"
+  # Inject AUTO_CONFIG with actual filenames
+  sed "s|const AUTO_CONFIG = null;|const AUTO_CONFIG = {\"sprite\": \"${CHARACTER_NAME}.png\", \"config\": \"${CHARACTER_NAME}.json\"};|" "$PREVIEW_SRC" > "$OUTPUT_DIR/preview.html"
+  echo "Preview copied with auto-load config"
 fi
 ```
 
