@@ -2,104 +2,101 @@
 
 Generate game character animations with AI. Text to sprite sheet in seconds.
 
+![Demo](https://via.placeholder.com/600x200?text=Demo+GIF+Coming+Soon)
+
 ## Features
 
-- Text-to-animation generation
-- Export to Phaser & Godot formats
-- Multiple AI providers (fal.ai, Gemini)
-- Zero config - auto-detects your API key
-- Open source (MIT)
+- **Text-to-Animation** - Describe character and action, get sprite sheet
+- **Auto Preview** - Browser preview with Phaser 3 & Babylon.js
+- **Multiple Formats** - Export to Phaser, Godot
+- **Smart Background Removal** - Bria RMBG 2.0 or fast chromakey
+- **Zero Config** - Setup wizard guides you through
 
 ## Installation
 
 ```bash
-# Add marketplace
-/plugin marketplace add witmani/game-animator
+/plugin install https://github.com/sephirxth/WitMani-game-animator
+```
 
-# Install plugin
-/plugin install game-animator@witmani-game-animator
-
-# Restart Claude Code
+After installation, **run setup**:
+```bash
+/witmani:setup
 ```
 
 ## Quick Start
 
-1. **Set up API key** (choose one):
-
-   ```bash
-   # Option A: fal.ai (recommended)
-   export FAL_KEY="your-key"
-
-   # Option B: Gemini (generous free tier)
-   export GEMINI_API_KEY="your-key"
-   ```
-
-2. **Generate animation**:
-
-   ```bash
-   /animate "pixel knight" "running right"
-   ```
-
-3. **Check output** in `animations/` folder
-
-## Usage
-
-### Basic
-
 ```bash
-/animate "character description" "action"
+# Generate a pixel knight running animation
+/witmani:animate "pixel knight" "running right"
+
+# Output in animations/ folder with preview.html
 ```
 
-### With options
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `/witmani:animate` | Generate sprite sheet animation |
+| `/witmani:setup` | Configure API keys and preferences |
+
+## Usage Examples
 
 ```bash
-/animate "pixel cat" "jumping" --frames 8 --fps 12
-```
+# Basic
+/witmani:animate "fire mage" "casting spell"
 
-### Check environment
+# With options
+/witmani:animate "cyber samurai" "sword slash" --frames 8 --fps 12
 
-```bash
-/animate-setup
+# For Godot
+/witmani:animate "slime" "bouncing" --format godot
 ```
 
 ## Output
 
+Each generation creates a folder with:
+
 ```
-animations/
-├── pixel_knight.png      # Sprite sheet
-├── pixel_knight.json     # Phaser/Godot config
-└── pixel_knight.gif      # Preview
-```
-
-### Phaser Integration
-
-```javascript
-// Load sprite sheet
-this.load.spritesheet('knight', 'pixel_knight.png', {
-  frameWidth: 64,
-  frameHeight: 64
-});
-
-// Create animation
-this.anims.create({
-  key: 'run',
-  frames: this.anims.generateFrameNumbers('knight', { start: 0, end: 7 }),
-  frameRate: 10,
-  repeat: -1
-});
+animations/pixel_knight_20240115/
+├── pixel_knight.png      # Sprite sheet (transparent)
+├── pixel_knight.json     # Animation config
+├── pixel_knight.gif      # Quick preview
+└── preview.html          # Interactive browser preview
 ```
 
-## Supported Providers
+### Browser Preview
 
-| Provider | API Key | Best For |
-|----------|---------|----------|
-| fal.ai | `FAL_KEY` | Quality, speed |
-| Gemini | `GEMINI_API_KEY` | Free tier |
+Open `preview.html` in any browser - it auto-loads and plays your animation with Phaser 3 or Babylon.js. No server needed.
+
+## Prompt Tips
+
+For best results, use this formula:
+
+```
+"[character] with [details], [action], game sprite style"
+```
+
+**Good examples**:
+- `"pixel knight with silver armor" "running right"`
+- `"cute slime, blue and bouncy" "jumping"`
+- `"fire mage in red robe" "casting fireball spell"`
+
+**Tips**:
+- Keep character description concise but specific
+- Action should be clear and single (not "running and jumping")
+- Add style hints: `"pixel art style"`, `"anime style"`, `"chibi"`
 
 ## Requirements
 
-- ffmpeg (for frame extraction)
-- One API key from supported providers
+- **ffmpeg** - For frame extraction (setup will guide installation)
+- **API Key** - fal.ai (recommended) or Gemini
+
+## Supported Providers
+
+| Provider | API Key | Get Key |
+|----------|---------|---------|
+| fal.ai | `FAL_KEY` | [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys) |
+| Gemini | `GEMINI_API_KEY` | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
 
 ## License
 
@@ -107,4 +104,4 @@ MIT
 
 ---
 
-Made with care by WitMani
+Made with AI by **WitMani**
