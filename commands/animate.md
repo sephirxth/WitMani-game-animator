@@ -11,7 +11,7 @@ Generate game character animations from text descriptions. Creates sprite sheets
 
 ```bash
 /witmani:animate "pixel knight" "running right"
-/witmani:animate "cute cat" "jumping" --frames 8
+/witmani:animate "cute cat" "jumping" --frames 12
 /witmani:animate "robot" "walking" --format godot
 ```
 
@@ -19,7 +19,7 @@ Generate game character animations from text descriptions. Creates sprite sheets
 
 - `$1` — Character description (required)
 - `$2` — Action description (required)
-- `--frames N` — Frame count (default: 8)
+- `--frames N` — Frame count (default: 16)
 - `--fps N` — Animation frame rate (default: 10)
 - `--format` — Output format: phaser (default), godot
 
@@ -199,7 +199,7 @@ done
 ### Step 5: Extract Frames
 
 ```bash
-FRAME_COUNT=<FRAME_COUNT>  # from --frames or default 8
+FRAME_COUNT=<FRAME_COUNT>  # from --frames or default 16
 
 DURATION=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$OUTPUT_DIR/animation.mp4")
 EXTRACT_FPS=$(echo "scale=2; $FRAME_COUNT / $DURATION" | bc)
@@ -268,7 +268,7 @@ FRAMES_DIR="$OUTPUT_DIR/frames_clean"
 ### Step 6: Create Sprite Sheet
 
 ```bash
-COLS=$([ $FRAME_COUNT -le 8 ] && echo $FRAME_COUNT || echo 8)
+COLS=$([ $FRAME_COUNT -le 16 ] && echo $FRAME_COUNT || echo 8)
 ROWS=$(( ($FRAME_COUNT + $COLS - 1) / $COLS ))
 
 ffmpeg -i "$FRAMES_DIR/frame_%04d.png" -filter_complex "tile=${COLS}x${ROWS}" "$OUTPUT_DIR/${CHARACTER_NAME}.png" -y 2>/dev/null
