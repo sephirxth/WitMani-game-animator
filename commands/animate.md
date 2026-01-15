@@ -110,7 +110,8 @@ curl -s "https://fal.run/fal-ai/bytedance/seedance/v1.5/pro/image-to-video" \
     \"image_url\": \"$TRANSPARENT_URL\",
     \"duration\": 4,
     \"aspect_ratio\": \"1:1\",
-    \"camera_fixed\": true
+    \"camera_fixed\": true,
+    \"generate_audio\": false
   }" > "$OUTPUT_DIR/video_response.json"
 
 VIDEO_URL=$(jq -r '.video.url' "$OUTPUT_DIR/video_response.json")
