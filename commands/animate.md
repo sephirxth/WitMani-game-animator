@@ -74,7 +74,7 @@ curl -s "https://fal.run/fal-ai/flux-pro/v1.1" \
   -H "Authorization: Key $FAL_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "prompt": "Single game character sprite: <CHARACTER_DESCRIPTION>. Centered, facing right, neutral pose. Style: clean, game-ready, high contrast, full body. Solid bright magenta (#FF00FF) background.",
+    "prompt": "Single game character sprite: <CHARACTER_DESCRIPTION>. Center-framed, facing right, neutral pose, full body fully visible in frame. Style: clean, game-ready, high contrast. Solid bright magenta (#FF00FF) background.",
     "image_size": {"width": 512, "height": 512},
     "num_images": 1
   }' > "$OUTPUT_DIR/image_response.json"
@@ -106,7 +106,7 @@ curl -s "https://fal.run/fal-ai/bytedance/seedance/v1/pro/fast/image-to-video" \
   -H "Authorization: Key $FAL_KEY" \
   -H "Content-Type: application/json" \
   -d "{
-    \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style, consistent character, solid bright magenta (#FF00FF) background, no background changes\",
+    \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style. Static camera, locked-down tripod shot, subject stays centered, consistent subject size, no zoom, no pan, no camera movement. Character remains in frame, same framing throughout, stable composition. Solid bright magenta (#FF00FF) background, no background changes\",
     \"image_url\": \"$TRANSPARENT_URL\",
     \"duration\": 5,
     \"aspect_ratio\": \"1:1\"
@@ -164,7 +164,7 @@ RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/mod
   -H "Content-Type: application/json" \
   -d "{
     \"instances\": [{
-      \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style, consistent character, solid magenta background, no background changes\",
+      \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style. Static camera, locked-down tripod shot, subject stays centered, consistent subject size, no zoom, no pan, no camera movement. Character remains in frame, same framing throughout, stable composition. Solid magenta background, no background changes\",
       \"image\": {\"bytesBase64Encoded\": \"$IMAGE_BASE64\"}
     }],
     \"parameters\": {
