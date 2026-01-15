@@ -97,18 +97,18 @@ curl -s "$TRANSPARENT_URL" -o "$OUTPUT_DIR/character_transparent.png"
 echo "Background removed"
 ```
 
-### Step 4a: Generate Animation Video (ByteDance Seedance Fast)
+### Step 4a: Generate Animation Video (ByteDance Seedance 1.5 Pro)
 
-Request animation on **magenta background**:
+Request animation on **magenta background** (4 seconds minimum for cost efficiency):
 
 ```bash
-curl -s "https://fal.run/fal-ai/bytedance/seedance/v1/pro/fast/image-to-video" \
+curl -s "https://fal.run/fal-ai/bytedance/seedance/v1.5/pro/image-to-video" \
   -H "Authorization: Key $FAL_KEY" \
   -H "Content-Type: application/json" \
   -d "{
     \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style. Static camera, locked-down tripod shot, subject stays centered, consistent subject size, no zoom, no pan, no camera movement. Character remains in frame, same framing throughout, stable composition. Solid bright magenta (#FF00FF) background, no background changes\",
     \"image_url\": \"$TRANSPARENT_URL\",
-    \"duration\": 5,
+    \"duration\": 4,
     \"aspect_ratio\": \"1:1\"
   }" > "$OUTPUT_DIR/video_response.json"
 
