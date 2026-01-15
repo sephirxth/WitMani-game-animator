@@ -106,10 +106,11 @@ curl -s "https://fal.run/fal-ai/bytedance/seedance/v1.5/pro/image-to-video" \
   -H "Authorization: Key $FAL_KEY" \
   -H "Content-Type: application/json" \
   -d "{
-    \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style. Static camera, locked-down tripod shot, subject stays centered, consistent subject size, no zoom, no pan, no camera movement. Character remains in frame, same framing throughout, stable composition. Solid bright magenta (#FF00FF) background, no background changes\",
+    \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style, subject stays centered, stable composition\",
     \"image_url\": \"$TRANSPARENT_URL\",
     \"duration\": 4,
-    \"aspect_ratio\": \"1:1\"
+    \"aspect_ratio\": \"1:1\",
+    \"camera_fixed\": true
   }" > "$OUTPUT_DIR/video_response.json"
 
 VIDEO_URL=$(jq -r '.video.url' "$OUTPUT_DIR/video_response.json")
