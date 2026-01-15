@@ -65,12 +65,12 @@ echo "Output: $OUTPUT_DIR"
 
 ## Provider: fal
 
-### Step 2a: Generate Character Image (fal Flux)
+### Step 2a: Generate Character Image (FLUX 1.1 Pro)
 
 Request character on **magenta background** (avoids color conflicts):
 
 ```bash
-curl -s "https://fal.run/fal-ai/flux/schnell" \
+curl -s "https://fal.run/fal-ai/flux-pro/v1.1" \
   -H "Authorization: Key $FAL_KEY" \
   -H "Content-Type: application/json" \
   -d '{
