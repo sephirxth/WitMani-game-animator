@@ -6,10 +6,7 @@
     "name": "WitMani",
     "url": "https://github.com/sephirxth"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/sephirxth/WitMani-game-animator"
-  },
+  "repository": "https://github.com/sephirxth/WitMani-game-animator",
   "homepage": "https://github.com/sephirxth/WitMani-game-animator",
   "keywords": [
     "game",
