@@ -9,16 +9,16 @@ Generate game character animations with AI. Text to sprite sheet in seconds.
 <p align="center">
   <img src="assets/demo_slime.gif" alt="Pixel Slime" width="128">
   <img src="assets/demo_dragon.gif" alt="Pixel Dragon" width="128">
-  <img src="assets/demo_knight.gif" alt="Pixel Knight" width="128">
+  <img src="assets/demo_knight_run.gif" alt="Pixel Knight Running" width="128">
 </p>
-<p align="center"><i>Slime · Dragon · Knight — Classic 16-bit pixel art style</i></p>
+<p align="center"><i>Slime · Dragon · Knight Run — Classic 16-bit pixel art style</i></p>
 
 ## Features
 
 - **Text-to-Animation** - Describe character and action, get sprite sheet
 - **Auto Preview** - Browser preview with Phaser 3 & Babylon.js
 - **Multiple Formats** - Export to Phaser, Godot
-- **Smart Background Removal** - Bria RMBG 2.0 or fast chromakey
+- **Smart Background Removal** - Bria RMBG 2.0 AI (accurate, no color artifacts)
 - **Zero Config** - Setup wizard guides you through
 
 ## Prerequisites
