@@ -44,9 +44,9 @@ else
 fi
 echo "Provider: $PROVIDER"
 
-# Background removal method (default: bria)
-BG_REMOVAL="${BG_REMOVAL:-bria}"
-echo "BG Removal: $BG_REMOVAL"
+# Background color: magenta (avoids conflict with common character colors)
+BG_COLOR="#FF00FF"
+echo "Background: magenta"
 ```
 
 **If PROVIDER is "none"**: Use Skill tool to invoke `/witmani:setup` automatically, then return to continue after setup is complete.
@@ -67,14 +67,14 @@ echo "Output: $OUTPUT_DIR"
 
 ### Step 2a: Generate Character Image (fal Flux)
 
-Request character on **bright green background** for clean chromakey:
+Request character on **magenta background** (avoids color conflicts):
 
 ```bash
 curl -s "https://fal.run/fal-ai/flux/schnell" \
   -H "Authorization: Key $FAL_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "prompt": "Single game character sprite: <CHARACTER_DESCRIPTION>. Centered, facing right, neutral pose. Style: clean, game-ready, high contrast, full body. IMPORTANT: bright green (#00FF00) solid background for chromakey.",
+    "prompt": "Single game character sprite: <CHARACTER_DESCRIPTION>. Centered, facing right, neutral pose. Style: clean, game-ready, high contrast, full body. Solid bright magenta (#FF00FF) background.",
     "image_size": {"width": 512, "height": 512},
     "num_images": 1
   }' > "$OUTPUT_DIR/image_response.json"
@@ -99,14 +99,14 @@ echo "Background removed"
 
 ### Step 4a: Generate Animation Video (ByteDance Seedance Fast)
 
-Request animation on **bright green background**:
+Request animation on **magenta background**:
 
 ```bash
 curl -s "https://fal.run/fal-ai/bytedance/seedance/v1/pro/fast/image-to-video" \
   -H "Authorization: Key $FAL_KEY" \
   -H "Content-Type: application/json" \
   -d "{
-    \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style, consistent character, bright green (#00FF00) solid background, no background changes\",
+    \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style, consistent character, solid bright magenta (#FF00FF) background, no background changes\",
     \"image_url\": \"$TRANSPARENT_URL\",
     \"duration\": 5,
     \"aspect_ratio\": \"1:1\"
@@ -127,7 +127,7 @@ echo "Animation video saved"
 curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=$GEMINI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "contents": [{"parts": [{"text": "Generate a single game character sprite: <CHARACTER_DESCRIPTION>. Centered on bright green (#00FF00) solid background for chromakey, facing right, neutral pose. Style: clean, game-ready, high contrast."}]}],
+    "contents": [{"parts": [{"text": "Generate a single game character sprite: <CHARACTER_DESCRIPTION>. Centered on solid bright magenta (#FF00FF) background, facing right, neutral pose. Style: clean, game-ready, high contrast."}]}],
     "generationConfig": {"responseModalities": ["image", "text"]}
   }' | jq -r '.candidates[0].content.parts[] | select(.inlineData) | .inlineData.data' | base64 -d > "$OUTPUT_DIR/character.png"
 echo "Character image saved"
@@ -148,7 +148,7 @@ RESPONSE=$(curl -s "https://generativelanguage.googleapis.com/v1beta/models/veo-
   -H "Content-Type: application/json" \
   -d "{
     \"instances\": [{
-      \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style, bright green background\",
+      \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style, solid magenta background\",
       \"image\": {\"bytesBase64Encoded\": \"$IMAGE_BASE64\"}
     }],
     \"parameters\": {\"aspectRatio\": \"1:1\"}
@@ -185,97 +185,59 @@ ffmpeg -i "$OUTPUT_DIR/animation.mp4" -vf "fps=$EXTRACT_FPS" -frames:v $FRAME_CO
 echo "Extracted $FRAME_COUNT frames"
 ```
 
-### Step 5.5: Remove Background (based on BG_REMOVAL config)
+### Step 5.5: Remove Background (Bria RMBG 2.0 AI)
 
-Execute based on `$BG_REMOVAL` setting (bria/chromakey/auto):
-
-**If BG_REMOVAL="chromakey" (fast, ~2s)**
+Use AI-based background removal for accurate results (no color-based artifacts):
 
 ```bash
+echo "Removing backgrounds with Bria RMBG 2.0 AI..."
+
+# Resize frames for faster processing (API works better with smaller images)
+mkdir -p "$OUTPUT_DIR/frames_small"
 for f in "$OUTPUT_DIR/frames/"frame_*.png; do
   FRAME_NAME=$(basename "$f")
-  ffmpeg -i "$f" -vf "chromakey=0x00FF00:0.3:0.1,despill=green" -c:v png "$OUTPUT_DIR/frames_clean/$FRAME_NAME" -y 2>/dev/null
+  ffmpeg -i "$f" -vf "scale=256:256" "$OUTPUT_DIR/frames_small/$FRAME_NAME" -y 2>/dev/null
 done
-echo "Chromakey applied"
-```
 
-**If BG_REMOVAL="bria" (default, stable, ~60s)**
-
-```bash
-echo "Using Bria RMBG 2.0 for background removal..."
-for f in "$OUTPUT_DIR/frames/"frame_*.png; do
+# Process each frame with Bria AI
+for f in "$OUTPUT_DIR/frames_small/"frame_*.png; do
   FRAME_NAME=$(basename "$f")
-  (
+
+  TEMP_JSON=$(mktemp)
+  printf '{"image_url": "data:image/png;base64,' > "$TEMP_JSON"
+  base64 -w 0 "$f" >> "$TEMP_JSON"
+  printf '"}' >> "$TEMP_JSON"
+
+  RESPONSE=$(curl -s --max-time 60 "https://fal.run/fal-ai/bria/background/remove" \
+    -H "Authorization: Key $FAL_KEY" \
+    -H "Content-Type: application/json" \
+    -d @"$TEMP_JSON")
+
+  rm "$TEMP_JSON"
+
+  TRANSPARENT_URL=$(echo "$RESPONSE" | jq -r '.image.url' 2>/dev/null)
+  if [ "$TRANSPARENT_URL" != "null" ] && [ -n "$TRANSPARENT_URL" ]; then
+    curl -s "$TRANSPARENT_URL" -o "$OUTPUT_DIR/frames_clean/$FRAME_NAME"
+    echo "  $FRAME_NAME done"
+  else
+    echo "  $FRAME_NAME failed, retrying..."
+    sleep 2
+    # Retry once
     TEMP_JSON=$(mktemp)
-    echo "{\"image_url\": \"data:image/png;base64,$(base64 -w 0 "$f")\"}" > "$TEMP_JSON"
-
-    RESPONSE=$(curl -s "https://fal.run/fal-ai/bria/background/remove" \
-      -H "Authorization: Key $FAL_KEY" \
-      -H "Content-Type: application/json" \
-      -d @"$TEMP_JSON")
-
+    printf '{"image_url": "data:image/png;base64,' > "$TEMP_JSON"
+    base64 -w 0 "$f" >> "$TEMP_JSON"
+    printf '"}' >> "$TEMP_JSON"
+    RESPONSE=$(curl -s --max-time 60 "https://fal.run/fal-ai/bria/background/remove" \
+      -H "Authorization: Key $FAL_KEY" -H "Content-Type: application/json" -d @"$TEMP_JSON")
     rm "$TEMP_JSON"
+    TRANSPARENT_URL=$(echo "$RESPONSE" | jq -r '.image.url' 2>/dev/null)
+    [ "$TRANSPARENT_URL" != "null" ] && curl -s "$TRANSPARENT_URL" -o "$OUTPUT_DIR/frames_clean/$FRAME_NAME"
+  fi
 
-    TRANSPARENT_URL=$(echo "$RESPONSE" | jq -r '.image.url')
-    if [ "$TRANSPARENT_URL" != "null" ]; then
-      curl -s "$TRANSPARENT_URL" -o "$OUTPUT_DIR/frames_clean/$FRAME_NAME"
-    fi
-    echo "Processed: $FRAME_NAME"
-  ) &
+  sleep 1  # Rate limiting
 done
-wait
 
-# Apply despill to remove any green edge artifacts
-for f in "$OUTPUT_DIR/frames_clean/"frame_*.png; do
-  ffmpeg -i "$f" -vf "despill=green" -c:v png "$f.tmp" -y 2>/dev/null && mv "$f.tmp" "$f"
-done
 echo "Bria RMBG 2.0 completed"
-```
-
-**If BG_REMOVAL="auto" (try chromakey first, fallback to bria)**
-
-```bash
-# First try chromakey
-for f in "$OUTPUT_DIR/frames/"frame_*.png; do
-  FRAME_NAME=$(basename "$f")
-  ffmpeg -i "$f" -vf "chromakey=0x00FF00:0.3:0.1,despill=green" -c:v png "$OUTPUT_DIR/frames_clean/$FRAME_NAME" -y 2>/dev/null
-done
-
-# Check if chromakey worked
-HAS_ALPHA=$(ffprobe -v error -select_streams v:0 -show_entries stream=pix_fmt -of default=noprint_wrappers=1:nokey=1 "$OUTPUT_DIR/frames_clean/frame_0001.png" 2>/dev/null | grep -c "rgba")
-
-if [ "$HAS_ALPHA" -eq 0 ]; then
-  echo "Chromakey failed, falling back to Bria RMBG 2.0..."
-  # Run Bria RMBG 2.0 (same as above)
-  for f in "$OUTPUT_DIR/frames/"frame_*.png; do
-    FRAME_NAME=$(basename "$f")
-    (
-      TEMP_JSON=$(mktemp)
-      echo "{\"image_url\": \"data:image/png;base64,$(base64 -w 0 "$f")\"}" > "$TEMP_JSON"
-      RESPONSE=$(curl -s "https://fal.run/fal-ai/bria/background/remove" \
-        -H "Authorization: Key $FAL_KEY" -H "Content-Type: application/json" -d @"$TEMP_JSON")
-      rm "$TEMP_JSON"
-      TRANSPARENT_URL=$(echo "$RESPONSE" | jq -r '.image.url')
-      [ "$TRANSPARENT_URL" != "null" ] && curl -s "$TRANSPARENT_URL" -o "$OUTPUT_DIR/frames_clean/$FRAME_NAME"
-      echo "Processed: $FRAME_NAME"
-    ) &
-  done
-  wait
-  for f in "$OUTPUT_DIR/frames_clean/"frame_*.png; do
-    ffmpeg -i "$f" -vf "despill=green" -c:v png "$f.tmp" -y 2>/dev/null && mv "$f.tmp" "$f"
-  done
-else
-  echo "Chromakey succeeded"
-fi
-```
-
-**Post-process: Clean up edges**
-
-```bash
-for f in "$OUTPUT_DIR/frames_clean/"frame_*.png; do
-  ffmpeg -i "$f" -vf "geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lt(alpha(X,Y),200),0,255)'" -c:v png "$f.tmp" -y 2>/dev/null && mv "$f.tmp" "$f"
-done
-echo "Edges cleaned"
 
 FRAMES_DIR="$OUTPUT_DIR/frames_clean"
 ```
