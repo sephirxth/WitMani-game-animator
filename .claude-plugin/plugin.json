@@ -1,10 +1,16 @@
 {
   "name": "witmani",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Generate game character animations from text descriptions. Create sprite sheets for Phaser, Godot, and more.",
   "author": {
-    "name": "WitMani"
+    "name": "WitMani",
+    "url": "https://github.com/sephirxth"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sephirxth/WitMani-game-animator"
+  },
+  "homepage": "https://github.com/sephirxth/WitMani-game-animator",
   "keywords": [
     "game",
     "animation",
@@ -12,9 +18,10 @@
     "phaser",
     "godot",
     "pixel-art",
-    "gamedev"
+    "gamedev",
+    "ai",
+    "text-to-image"
   ],
-  "homepage": "https://github.com/anthropics/claude-code",
   "license": "MIT",
   "commands": ["./commands"]
 }

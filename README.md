@@ -1,5 +1,9 @@
 # WitMani Game Animator
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blue)](https://claude.com/code)
+[![Version](https://img.shields.io/badge/version-1.0.0-green)](https://github.com/sephirxth/WitMani-game-animator)
+
 Generate game character animations with AI. Text to sprite sheet in seconds.
 
 <p align="center">
@@ -16,6 +20,19 @@ Generate game character animations with AI. Text to sprite sheet in seconds.
 - **Multiple Formats** - Export to Phaser, Godot
 - **Smart Background Removal** - Bria RMBG 2.0 or fast chromakey
 - **Zero Config** - Setup wizard guides you through
+
+## Prerequisites
+
+Before using this plugin, ensure you have:
+
+- **Claude Code** - [Install Claude Code](https://claude.com/code)
+- **ffmpeg** - Required for frame extraction
+  - Ubuntu/Debian: `sudo apt install ffmpeg`
+  - macOS: `brew install ffmpeg`
+  - Windows: `choco install ffmpeg`
+- **API Key** - One of the following:
+  - [fal.ai](https://fal.ai/dashboard/keys) (recommended)
+  - [Gemini](https://aistudio.google.com/apikey) (free tier available)
 
 ## Installation
 
@@ -57,6 +74,18 @@ After installation, **run setup**:
 /witmani:animate "slime" "bouncing" --format godot
 ```
 
+## Configuration
+
+The plugin stores configuration in `~/.config/witmani/config`:
+
+| Setting | Description | Options |
+|---------|-------------|---------|
+| `FAL_KEY` | fal.ai API key | Your API key |
+| `GEMINI_API_KEY` | Gemini API key | Your API key |
+| `BG_REMOVAL` | Background removal method | `bria`, `chromakey`, `auto` |
+
+Run `/witmani:setup` to configure these settings interactively.
+
 ## Output
 
 Each generation creates a folder with:
@@ -91,10 +120,16 @@ For best results, use this formula:
 - Action should be clear and single (not "running and jumping")
 - Add style hints: `"pixel art style"`, `"anime style"`, `"chibi"`
 
-## Requirements
+## Security
 
-- **ffmpeg** - For frame extraction (setup will guide installation)
-- **API Key** - fal.ai (recommended) or Gemini
+This plugin handles API keys securely:
+
+- **No hardcoded keys** - All API keys are stored in user config files
+- **Secure storage** - Config file permissions set to 600 (owner read/write only)
+- **Environment variables** - Keys loaded from `~/.config/witmani/config`
+- **No transmission** - Keys are only sent to their respective API providers
+
+For more details, see [SECURITY.md](SECURITY.md).
 
 ## Supported Providers
 
@@ -103,9 +138,19 @@ For best results, use this formula:
 | fal.ai | `FAL_KEY` | [fal.ai/dashboard/keys](https://fal.ai/dashboard/keys) |
 | Gemini | `GEMINI_API_KEY` | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
 
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
 ## License
 
-MIT
+MIT - See [LICENSE](LICENSE) for details.
 
 ---
 
