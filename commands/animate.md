@@ -74,7 +74,7 @@ curl -s "https://fal.run/fal-ai/flux-pro/v1.1" \
   -H "Authorization: Key $FAL_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "prompt": "Single game character sprite: <CHARACTER_DESCRIPTION>. Center-framed, facing right, neutral pose, full body fully visible in frame. Style: clean, game-ready, high contrast. Solid bright magenta (#FF00FF) background.",
+    "prompt": "Single game character sprite: <CHARACTER_DESCRIPTION>. Center-framed, facing right, neutral pose, full body visible with large padding and margin around subject on all sides. Style: clean, game-ready, high contrast. Solid bright magenta (#FF00FF) background.",
     "image_size": {"width": 512, "height": 512},
     "num_images": 1
   }' > "$OUTPUT_DIR/image_response.json"
@@ -106,7 +106,7 @@ curl -s "https://fal.run/fal-ai/bytedance/seedance/v1.5/pro/image-to-video" \
   -H "Authorization: Key $FAL_KEY" \
   -H "Content-Type: application/json" \
   -d "{
-    \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style, subject stays centered, stable composition\",
+    \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style. Maintain margin around subject, keep border space throughout, subject stays centered\",
     \"image_url\": \"$TRANSPARENT_URL\",
     \"duration\": 4,
     \"aspect_ratio\": \"1:1\",
