@@ -121,51 +121,74 @@ echo "Animation video saved"
 
 ## Provider: gemini
 
-### Step 2b: Generate Character Image (Gemini)
+### Step 2b: Generate Character Image (Gemini 3 Pro Image / Nano Banana Pro)
 
 ```bash
-curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=$GEMINI_API_KEY" \
+curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent" \
+  -H "x-goog-api-key: $GEMINI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "contents": [{"parts": [{"text": "Generate a single game character sprite: <CHARACTER_DESCRIPTION>. Centered on solid bright magenta (#FF00FF) background, facing right, neutral pose. Style: clean, game-ready, high contrast."}]}],
-    "generationConfig": {"responseModalities": ["image", "text"]}
-  }' | jq -r '.candidates[0].content.parts[] | select(.inlineData) | .inlineData.data' | base64 -d > "$OUTPUT_DIR/character.png"
-echo "Character image saved"
+    "contents": [{
+      "parts": [
+        {"text": "Generate a single game character sprite: <CHARACTER_DESCRIPTION>. Centered on solid bright magenta (#FF00FF) background, facing right, neutral pose. Style: clean, game-ready, high contrast, full body."}
+      ]
+    }],
+    "generationConfig": {
+      "responseModalities": ["IMAGE"],
+      "imageConfig": {
+        "aspectRatio": "1:1",
+        "imageSize": "1K"
+      }
+    }
+  }' > "$OUTPUT_DIR/image_response.json"
+
+# Extract base64 image from response
+jq -r '.candidates[0].content.parts[] | select(.inlineData) | .inlineData.data' "$OUTPUT_DIR/image_response.json" | base64 -d > "$OUTPUT_DIR/character.png"
+echo "Character image saved (Gemini 3 Pro Image)"
 ```
 
-### Step 3b: Remove Background (skip for Gemini)
+### Step 3b: Remove Background (keep original for Gemini pipeline)
 
 ```bash
 cp "$OUTPUT_DIR/character.png" "$OUTPUT_DIR/character_transparent.png"
+echo "Character prepared for video generation"
 ```
 
-### Step 4b: Generate Animation Video (Gemini Veo)
+### Step 4b: Generate Animation Video (Veo 3.1)
 
 ```bash
 IMAGE_BASE64=$(base64 -w 0 "$OUTPUT_DIR/character_transparent.png")
 
-RESPONSE=$(curl -s "https://generativelanguage.googleapis.com/v1beta/models/veo-2.0-generate-001:predictLongRunning?key=$GEMINI_API_KEY" \
+RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/veo-3.1-generate-preview:predictLongRunning" \
+  -H "x-goog-api-key: $GEMINI_API_KEY" \
   -H "Content-Type: application/json" \
   -d "{
     \"instances\": [{
-      \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style, solid magenta background\",
+      \"prompt\": \"<ACTION_DESCRIPTION>, smooth loop animation, game sprite style, consistent character, solid magenta background, no background changes\",
       \"image\": {\"bytesBase64Encoded\": \"$IMAGE_BASE64\"}
     }],
-    \"parameters\": {\"aspectRatio\": \"1:1\"}
+    \"parameters\": {
+      \"aspectRatio\": \"1:1\",
+      \"resolution\": \"720p\",
+      \"durationSeconds\": \"4\"
+    }
   }")
 
 OPERATION_NAME=$(echo "$RESPONSE" | jq -r '.name')
+echo "Video generation started: $OPERATION_NAME"
 
-# Poll until done
-for i in {1..30}; do
-  sleep 10
-  STATUS=$(curl -s "https://generativelanguage.googleapis.com/v1beta/$OPERATION_NAME?key=$GEMINI_API_KEY")
+# Poll until done (Veo 3.1 is faster)
+for i in {1..60}; do
+  sleep 5
+  STATUS=$(curl -s "https://generativelanguage.googleapis.com/v1beta/$OPERATION_NAME" \
+    -H "x-goog-api-key: $GEMINI_API_KEY")
+
   if [ "$(echo "$STATUS" | jq -r '.done')" = "true" ]; then
     echo "$STATUS" | jq -r '.response.predictions[0].bytesBase64Encoded' | base64 -d > "$OUTPUT_DIR/animation.mp4"
-    echo "Animation video saved"
+    echo "Animation video saved (Veo 3.1)"
     break
   fi
-  echo "Generating video... ($i/30)"
+  echo "Generating video... ($i/60)"
 done
 ```
 
