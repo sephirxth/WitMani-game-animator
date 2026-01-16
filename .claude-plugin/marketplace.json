@@ -1,0 +1,10 @@
+{
+  "name": "WitMani Game Animator",
+  "description": "AI-powered game animation generation tools",
+  "plugins": [
+    {
+      "name": "witmani",
+      "path": "."
+    }
+  ]
+}
