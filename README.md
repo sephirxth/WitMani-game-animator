@@ -57,6 +57,22 @@ After installation, **run setup**:
 /witmani:setup
 ```
 
+## Updating
+
+Due to a [known Claude Code cache issue](https://github.com/anthropics/claude-code/issues/14061), `/plugin update` may not work properly.
+
+**Option 1: Clear cache first**
+```bash
+rm -rf ~/.claude/plugins/cache/witmani*
+/plugin update witmani
+```
+
+**Option 2: Uninstall and reinstall**
+```bash
+/plugin uninstall witmani
+/plugin install https://github.com/sephirxth/WitMani-game-animator
+```
+
 ## Quick Start
 
 ```bash
