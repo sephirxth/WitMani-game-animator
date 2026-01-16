@@ -1,10 +1,19 @@
 {
-  "name": "WitMani Game Animator",
-  "description": "AI-powered game animation generation tools",
+  "name": "game-animator",
+  "version": "1.0.0",
+  "description": "Generate game character animations from text. One command, instant sprite sheets.",
+  "owner": {
+    "name": "WitMani"
+  },
   "plugins": [
     {
       "name": "witmani",
-      "path": "."
+      "version": "1.0.0",
+      "description": "Generate game character animations from text descriptions. Create sprite sheets for Phaser, Godot, and more.",
+      "author": {"name": "WitMani"},
+      "source": "./",
+      "category": "development",
+      "tags": ["game", "animation", "sprite", "phaser", "godot", "ai"]
     }
   ]
 }
