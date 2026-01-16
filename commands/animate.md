@@ -10,15 +10,29 @@ Generate game character animations from text descriptions. Creates sprite sheets
 ## Usage
 
 ```bash
+# Basic (interactive confirmation enabled by default)
 /witmani:animate "pixel knight" "running right"
+
+# With custom frame count
 /witmani:animate "cute cat" "jumping" --frames 12
+
+# Use your own image as first frame
+/witmani:animate "running right" --image ./my_character.png
+/witmani:animate "attack slash" --image https://example.com/character.png
+
+# Skip confirmation (one-shot mode)
+/witmani:animate "pixel knight" "running right" --no-confirm
+
+# Godot format output
 /witmani:animate "robot" "walking" --format godot
 ```
 
 ## Parameters
 
-- `$1` — Character description (required)
+- `$1` — Character description (required, unless --image is used)
 - `$2` — Action description (required)
+- `--image <path|url>` — Use existing image as first frame (skip image generation)
+- `--no-confirm` — Skip confirmation step (default: confirm enabled)
 - `--frames N` — Frame count (default: 16)
 - `--fps N` — Animation frame rate (default: 10)
 - `--format` — Output format: phaser (default), godot
@@ -26,6 +40,17 @@ Generate game character animations from text descriptions. Creates sprite sheets
 ## Instructions
 
 You are a game animation generator. Execute these steps to create a sprite sheet.
+
+### Interactive Workflow
+
+The default workflow includes a **confirmation step** after image generation:
+
+1. **If `--image` provided**: Skip to Step 3 (use user's image directly)
+2. **If no `--image`**: Generate character image → Show to user → Wait for confirmation
+3. **User can**:
+   - Confirm and continue → Proceed to animation
+   - Regenerate → Generate new image
+   - Use own image → Provide path/URL, then proceed
 
 ### Step 0: Load Config and Detect Provider
 
@@ -65,9 +90,25 @@ echo "Output: $OUTPUT_DIR"
 
 ## Provider: fal
 
-### Step 2a: Generate Character Image (FLUX 1.1 Pro)
+### Step 2a: Generate or Load Character Image
 
-Request character on **magenta background** (avoids color conflicts):
+**If `--image` parameter provided:**
+
+```bash
+# User provided their own image
+USER_IMAGE="<USER_IMAGE_PATH_OR_URL>"
+
+if [[ "$USER_IMAGE" == http* ]]; then
+  # URL provided
+  curl -s "$USER_IMAGE" -o "$OUTPUT_DIR/character.png"
+else
+  # Local file path
+  cp "$USER_IMAGE" "$OUTPUT_DIR/character.png"
+fi
+echo "Using user-provided image"
+```
+
+**If no `--image` (generate new image with FLUX 1.1 Pro):**
 
 ```bash
 curl -s "https://fal.run/fal-ai/flux-pro/v1.1" \
@@ -83,6 +124,20 @@ IMAGE_URL=$(jq -r '.images[0].url' "$OUTPUT_DIR/image_response.json")
 curl -s "$IMAGE_URL" -o "$OUTPUT_DIR/character.png"
 echo "Character image saved"
 ```
+
+### Step 2.5a: Confirm Character Image (Interactive)
+
+**Unless `--no-confirm` is specified**, show the generated image to user and ask for confirmation:
+
+1. **Display** the generated image using Read tool: `$OUTPUT_DIR/character.png`
+2. **Ask user** using AskUserQuestion tool:
+   - Question: "角色图生成完成，是否满意？"
+   - Options:
+     - "✅ 满意，继续生成动画" → Proceed to Step 3
+     - "🔄 不满意，重新生成" → Go back to Step 2a
+     - "📁 使用自己的图片" → Ask for path/URL, then proceed
+
+**If user chooses to use their own image**, ask for the image path or URL, then load it as described above.
 
 ### Step 3a: Remove Background (Bria RMBG 2.0)
 
@@ -123,7 +178,11 @@ echo "Animation video saved"
 
 ## Provider: gemini
 
-### Step 2b: Generate Character Image (Gemini 3 Pro Image / Nano Banana Pro)
+### Step 2b: Generate or Load Character Image (Gemini)
+
+**If `--image` parameter provided:** Same as fal provider - load user's image.
+
+**If no `--image` (generate with Gemini 3 Pro Image):**
 
 ```bash
 curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent" \
@@ -148,6 +207,10 @@ curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-
 jq -r '.candidates[0].content.parts[] | select(.inlineData) | .inlineData.data' "$OUTPUT_DIR/image_response.json" | base64 -d > "$OUTPUT_DIR/character.png"
 echo "Character image saved (Gemini 3 Pro Image)"
 ```
+
+### Step 2.5b: Confirm Character Image (Interactive)
+
+Same as Step 2.5a - show image and ask for user confirmation unless `--no-confirm` is specified.
 
 ### Step 3b: Remove Background (keep original for Gemini pipeline)
 
