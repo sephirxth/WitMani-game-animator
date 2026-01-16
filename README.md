@@ -65,25 +65,20 @@ After installation, **run setup**:
 
 Due to a [known Claude Code cache issue](https://github.com/anthropics/claude-code/issues/14061), `/plugin update` may not work properly.
 
-**Option 1: Full cache clear (recommended)**
+**Full cache clear and reinstall:**
 ```bash
-# Clear all cached files
+# Step 1: Uninstall
+/plugin uninstall witmani@game-animator
+
+# Step 2: Clear all cached files
 rm -rf ~/.claude/plugins/cache/game-animator
 rm -rf ~/.claude/plugins/marketplaces/game-animator
 
-# Reinstall
+# Step 3: Reinstall
 /plugin marketplace add sephirxth/WitMani-game-animator
 /plugin install witmani@game-animator
 
-# Restart Claude Code to apply changes
-```
-
-**Option 2: Uninstall and reinstall**
-```bash
-/plugin uninstall witmani@game-animator
-/plugin marketplace add sephirxth/WitMani-game-animator
-/plugin install witmani@game-animator
-# Restart Claude Code
+# Step 4: Restart Claude Code to apply changes
 ```
 
 ## Quick Start
