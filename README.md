@@ -7,12 +7,11 @@
 Generate game character animations with AI. Text to sprite sheet in seconds.
 
 <p align="center">
-  <img src="assets/demo_slime.gif" alt="Pixel Slime" width="100">
-  <img src="assets/demo_dragon.gif" alt="Pixel Dragon" width="100">
-  <img src="assets/demo_knight_run.gif" alt="Pixel Knight Running" width="100">
-  <img src="assets/demo_cavalry.gif" alt="Anime Cavalry" width="100">
+  <img src="assets/demo_slime.gif" alt="Pixel Slime" width="128">
+  <img src="assets/demo_dragon.gif" alt="Pixel Dragon" width="128">
+  <img src="assets/demo_knight_run.gif" alt="Pixel Knight Running" width="128">
 </p>
-<p align="center"><i>Pixel Slime · Dragon · Knight · Anime Cavalry — Multiple art styles supported</i></p>
+<p align="center"><i>Slime · Dragon · Knight Run — Classic 16-bit pixel art style</i></p>
 
 <h3 style="text-align: center">
 We have discord now!<br>Click the badge to Join our community!🤩🤩🤩</h3>
