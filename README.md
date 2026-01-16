@@ -13,15 +13,17 @@ Generate game character animations with AI. Text to sprite sheet in seconds.
 </p>
 <p align="center"><i>Slime · Dragon · Knight Run — Classic 16-bit pixel art style</i></p>
 
-<h3 style="text-align: center">
-We have discord now!<br>Click the badge to Join our community!🤩🤩🤩</h3>
-<p align="center">
-  <a href="https://discord.gg/suHDSzVRZ3" target="_blank">
-    <img alt="Dynamic JSON Badge" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Fv9%2Finvites%2FsuHDSzVRZ3%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&style=for-the-badge&logo=discord&label=Members&labelColor=rgba(219%2C%20219%2C%20219%2C%200.8)&color=5865F2&link=https%3A%2F%2Fdiscord.com%2Finvite%2FsuHDSzVRZ3">
-  </a><br>
-  <img src="assets/Discord_QR_Code.png" alt="Discord QR Code" width="128">
-</p>
-<h3 style="text-align: center">Or Scan This QR Code to Join our community!🤩🤩🤩</h3>
+<div align="center">
+  <h3>We have discord now!<br>Click the badge to Join our community!🤩🤩🤩</h3>
+  <p>
+    <a href="https://discord.gg/suHDSzVRZ3" target="_blank">
+      <img alt="Dynamic JSON Badge" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Fv9%2Finvites%2FsuHDSzVRZ3%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&style=for-the-badge&logo=discord&label=Members&labelColor=rgba(219%2C%20219%2C%20219%2C%200.8)&color=5865F2&link=https%3A%2F%2Fdiscord.com%2Finvite%2FsuHDSzVRZ3">
+    </a><br>
+    <img src="assets/Discord_QR_Code.png" alt="Discord QR Code" width="128">
+  </p>
+  <h3>Or Scan This QR Code to Join our community!🤩🤩🤩</h3>
+</div>
+
 
 ## Features
 
