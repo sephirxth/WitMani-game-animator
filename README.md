@@ -49,7 +49,11 @@ Before using this plugin, ensure you have:
 ## Installation
 
 ```bash
-/plugin install https://github.com/sephirxth/WitMani-game-animator
+# Step 1: Add the marketplace
+/plugin marketplace add sephirxth/WitMani-game-animator
+
+# Step 2: Install the plugin
+/plugin install witmani@game-animator
 ```
 
 After installation, **run setup**:
@@ -63,14 +67,15 @@ Due to a [known Claude Code cache issue](https://github.com/anthropics/claude-co
 
 **Option 1: Clear cache first**
 ```bash
-rm -rf ~/.claude/plugins/cache/witmani*
-/plugin update witmani
+rm -rf ~/.claude/plugins/cache/game-animator*
+/plugin marketplace update game-animator
 ```
 
 **Option 2: Uninstall and reinstall**
 ```bash
-/plugin uninstall witmani
-/plugin install https://github.com/sephirxth/WitMani-game-animator
+/plugin uninstall witmani@game-animator
+/plugin marketplace add sephirxth/WitMani-game-animator
+/plugin install witmani@game-animator
 ```
 
 ## Quick Start
