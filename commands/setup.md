@@ -119,11 +119,11 @@ export FAL_KEY="user-provided-key"
 
 Use AskUserQuestion tool to let user choose frame background removal method:
 
-Question: "选择抠图方式 (帧背景移除)"
+Question: "Choose background removal method"
 Options:
-- "Bria RMBG 2.0 (默认，稳定可靠，~60秒)" - AI抠图，效果稳定
-- "Chromakey (快速，~2秒)" - 绿幕抠图，依赖视频绿幕质量
-- "Auto (智能选择)" - 先尝试chromakey，失败自动切换Bria
+- "Bria RMBG 2.0 (Recommended)" - AI-powered, stable results, ~60s
+- "Chromakey (Fast)" - Green screen removal, ~2s, depends on video quality
+- "Auto (Smart)" - Try chromakey first, fallback to Bria if fails
 
 Save the choice to config:
 ```bash

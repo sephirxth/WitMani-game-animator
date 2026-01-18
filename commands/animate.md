@@ -131,11 +131,11 @@ echo "Character image saved"
 
 1. **Display** the generated image using Read tool: `$OUTPUT_DIR/character.png`
 2. **Ask user** using AskUserQuestion tool:
-   - Question: "角色图生成完成，是否满意？"
+   - Question: "Character image generated. Are you satisfied?"
    - Options:
-     - "✅ 满意，继续生成动画" → Proceed to Step 3
-     - "🔄 不满意，重新生成" → Go back to Step 2a
-     - "📁 使用自己的图片" → Ask for path/URL, then proceed
+     - "Continue with animation" → Proceed to Step 3
+     - "Regenerate image" → Go back to Step 2a
+     - "Use my own image" → Ask for path/URL, then proceed
 
 **If user chooses to use their own image**, ask for the image path or URL, then load it as described above.
 
