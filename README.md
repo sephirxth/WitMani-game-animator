@@ -33,6 +33,14 @@ Generate game character animations with AI. Text to sprite sheet in seconds.
 - **Smart Background Removal** - Bria RMBG 2.0 AI (accurate, no color artifacts)
 - **Zero Config** - Setup wizard guides you through
 
+## When to Use This
+
+- You need animated sprite sheets for a game but don't have a pixel artist on the team
+- You want to rapidly prototype character animations during game jams
+- You're building a Phaser or Godot game and need quick, consistent sprite animations
+- You need batch animation generation with transparent backgrounds ready for game engines
+- You want AI-generated placeholder art that matches a consistent pixel art style
+
 ## Prerequisites
 
 Before using this plugin, ensure you have:
