@@ -192,6 +192,18 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+
+## Related Projects
+
+| Project | What It Does |
+|---------|-------------|
+| [SurvivorDemo](https://github.com/sephirxth/SurvivorDemo) | Vampire Survivors-style browser game — use Game Animator to create sprites for games like this |
+| [NetOps](https://github.com/sephirxth/transport-sim) | Data center network routing puzzle game (Phaser 3) |
+| [OpenClaw Canvas](https://github.com/sephirxth/openclaw-canvas) | AI agent orchestration dashboard |
+| [LLM Code Test](https://github.com/sephirxth/LLM_code_test) | Benchmark comparing LLMs on code generation |
+
+[All projects →](https://github.com/sephirxth)
+
 ## License
 
 MIT - See [LICENSE](LICENSE) for details.
